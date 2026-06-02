@@ -10,9 +10,11 @@ import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/valuation/presentation/screens/valuation_input_screen.dart';
 import '../../features/valuation/presentation/screens/valuation_result_screen.dart';
+import '../../features/valuation/domain/models/valuation_response.dart';
 import '../../features/valuation/presentation/screens/comparable_explorer_screen.dart';
 import '../../features/copilot/presentation/screens/copilot_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/workspace/presentation/screens/workspace_selector_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -58,17 +60,34 @@ class AppRouter {
       GoRoute(
         path: RoutePaths.valuationResult,
         name: RouteNames.valuationResult,
-        builder: (context, state) => const ValuationResultScreen(),
+        builder: (context, state) => ValuationResultScreen(
+          response: state.extra is ValuationResponse
+              ? state.extra! as ValuationResponse
+              : null,
+        ),
       ),
       GoRoute(
         path: RoutePaths.comparableExplorer,
         name: RouteNames.comparableExplorer,
-        builder: (context, state) => const ComparableExplorerScreen(),
+        builder: (context, state) => ComparableExplorerScreen(
+          response: state.extra is ValuationResponse
+              ? state.extra! as ValuationResponse
+              : null,
+        ),
       ),
       GoRoute(
         path: RoutePaths.copilot,
         name: RouteNames.copilot,
-        builder: (context, state) => const CopilotScreen(),
+        builder: (context, state) => CopilotScreen(
+          valuationResponse: state.extra is ValuationResponse
+              ? state.extra! as ValuationResponse
+              : null,
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.workspace,
+        name: RouteNames.workspace,
+        builder: (context, state) => const WorkspaceSelectorScreen(),
       ),
       GoRoute(
         path: RoutePaths.profile,

@@ -11,5 +11,6 @@ class RouteNames {
   static const valuationResult = 'valuationResult';
   static const comparableExplorer = 'comparableExplorer';
   static const copilot = 'copilot';
+  static const workspace = 'workspace';
   static const profile = 'profile';
 }

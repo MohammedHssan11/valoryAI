@@ -42,6 +42,8 @@ dependencies:
   google_sign_in: any
   flutter_animate: any
   dio: any
+  geolocator: any
+  google_maps_flutter: any
 
 dev_dependencies:
   flutter_test:

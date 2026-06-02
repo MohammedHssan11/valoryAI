@@ -11,5 +11,6 @@ class RoutePaths {
   static const valuationResult = '/valuation-result';
   static const comparableExplorer = '/comparable-explorer';
   static const copilot = '/copilot';
+  static const workspace = '/workspace';
   static const profile = '/profile';
 }
