@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+markers = [
+  "integration: requires a running PostgreSQL/PostGIS stack and seeded data",
+  "performance: local latency and operational budget checks",
+]
