@@ -6,7 +6,7 @@ import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
-import '../../workspace/presentation/state/workspace_state_manager.dart';
+import '../../../workspace/presentation/state/workspace_state_manager.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

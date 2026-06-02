@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
@@ -700,30 +701,5 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
     } else {
       return '${dt.day}/${dt.month}/${dt.year}';
     }
-  }
-}
-
-class _AmbientGlow extends StatelessWidget {
-  const _AmbientGlow({required this.color, required this.size, required this.opacity});
-
-  final Color color;
-  final double size;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color.withValues(alpha: opacity),
-            Colors.transparent,
-          ],
-        ),
-      ),
-    );
   }
 }

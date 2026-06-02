@@ -8,17 +8,15 @@ class WorkspaceStateManager extends ChangeNotifier {
 
   Workspace? _activeWorkspace;
   Workspace? get activeWorkspace {
-    if (_activeWorkspace == null) {
-      _activeWorkspace = Workspace(
-        id: 1,
-        userId: 1,
-        name: 'New Cairo Premium Portfolio',
-        description: 'Focus on Eastown, Mivida, and Fifth Settlement high-yield residential purchases.',
-        propertyCount: 8,
-        createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
-      );
-    }
+    _activeWorkspace ??= Workspace(
+      id: 1,
+      userId: 1,
+      name: 'New Cairo Premium Portfolio',
+      description: 'Focus on Eastown, Mivida, and Fifth Settlement high-yield residential purchases.',
+      propertyCount: 8,
+      createdAt: DateTime.now().subtract(const Duration(days: 30)),
+      updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
+    );
     return _activeWorkspace;
   }
 
