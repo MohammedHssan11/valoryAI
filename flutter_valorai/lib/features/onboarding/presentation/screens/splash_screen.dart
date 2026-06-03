@@ -8,6 +8,7 @@ import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../auth/presentation/state/auth_session_manager.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -24,7 +25,11 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _navigationTimer = Timer(2800.ms, () {
       if (mounted) {
-        context.goNamed(RouteNames.onboarding);
+        context.goNamed(
+          AuthSessionManager.instance.isAuthenticated
+              ? RouteNames.home
+              : RouteNames.onboarding,
+        );
       }
     });
   }

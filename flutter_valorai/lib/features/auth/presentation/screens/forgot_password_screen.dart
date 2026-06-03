@@ -52,7 +52,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         'Password reset link sent. Check your email inbox.',
         isError: false,
       );
-    } on Exception catch (exception) {
+    } on Exception catch (exception, stackTrace) {
+      debugPrint("ERROR: $exception");
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) {
         return;
       }

@@ -1,0 +1,7 @@
+geo_validation_status,count,dataset
+valid,19914,residential_rent
+valid,19880,residential_sale
+valid,12313,commercial_rent
+invalid,64,commercial_rent
+valid,8448,commercial_sale
+invalid,21,commercial_sale

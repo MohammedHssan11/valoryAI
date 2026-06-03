@@ -16,7 +16,7 @@ class Workspace {
     required this.id,
     required this.userId,
     required this.name,
-    this.description = 'Real estate workspace context',
+    this.description = '',
     this.propertyCount = 0,
     required this.createdAt,
     required this.updatedAt,
@@ -71,13 +71,19 @@ class Workspace {
       id: map['id'] as int,
       userId: map['user_id'] as int? ?? 1,
       name: map['name'] as String,
-      description: map['description'] as String? ?? 'Real estate workspace context',
+      description: map['description'] as String? ?? '',
       propertyCount: map['property_count'] as int? ?? 0,
-      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : DateTime.now(),
-      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : DateTime.now(),
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'] as String)
+          : DateTime.now(),
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'] as String)
+          : DateTime.now(),
       version: map['version'] as int? ?? 1,
       isDeleted: map['is_deleted'] as bool? ?? false,
-      deletedAt: map['deleted_at'] != null ? DateTime.parse(map['deleted_at'] as String) : null,
+      deletedAt: map['deleted_at'] != null
+          ? DateTime.parse(map['deleted_at'] as String)
+          : null,
     );
   }
 

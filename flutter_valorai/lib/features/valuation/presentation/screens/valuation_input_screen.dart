@@ -40,6 +40,8 @@ class _ValuationInputScreenState extends State<ValuationInputScreen> {
   final _districtController = TextEditingController();
   final _compoundController = TextEditingController();
   final _areaController = TextEditingController();
+  final _latitudeController = TextEditingController();
+  final _longitudeController = TextEditingController();
   final _selectedAmenities = <String>{};
 
   int _stepIndex = 0;
@@ -68,6 +70,8 @@ class _ValuationInputScreenState extends State<ValuationInputScreen> {
     _districtController.dispose();
     _compoundController.dispose();
     _areaController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
     super.dispose();
   }
 
@@ -447,26 +451,31 @@ class _ValuationInputScreenState extends State<ValuationInputScreen> {
               isGps ? 'Get Current Location' : 'Pick Location On Map',
             ),
           ),
-          if (_latitude != null && _longitude != null) ...[
-            const SizedBox(height: AppSpacing.lg),
-            Row(
-              children: [
-                Expanded(
-                  child: _CoordinateCard(
-                    label: 'Latitude',
-                    value: _latitude!.toStringAsFixed(6),
-                  ),
+          const SizedBox(height: AppSpacing.lg),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _CoordinateTextField(
+                  controller: _latitudeController,
+                  label: 'Latitude',
+                  hint: '30.0444',
+                  errorText: _latitudeErrorText,
+                  onChanged: _onCoordinateTextChanged,
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: _CoordinateCard(
-                    label: 'Longitude',
-                    value: _longitude!.toStringAsFixed(6),
-                  ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _CoordinateTextField(
+                  controller: _longitudeController,
+                  label: 'Longitude',
+                  hint: '31.2357',
+                  errorText: _longitudeErrorText,
+                  onChanged: _onCoordinateTextChanged,
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -777,7 +786,7 @@ class _ValuationInputScreenState extends State<ValuationInputScreen> {
           _cityController.text.trim().isNotEmpty &&
           _districtController.text.trim().isNotEmpty;
     }
-    return _latitude != null && _longitude != null;
+    return _hasValidCoordinates;
   }
 
   bool get _isCurrentSelectionSupported {
@@ -798,8 +807,7 @@ class _ValuationInputScreenState extends State<ValuationInputScreen> {
 
   String get _locationSummary {
     if (_locationMode != ValuationLocationMode.hierarchy &&
-        _latitude != null &&
-        _longitude != null) {
+        _hasValidCoordinates) {
       final source = _locationMode == ValuationLocationMode.gps
           ? 'Current GPS location'
           : 'Google Maps pin';
@@ -889,10 +897,7 @@ class _ValuationInputScreenState extends State<ValuationInputScreen> {
       if (!mounted) {
         return;
       }
-      setState(() {
-        _latitude = position.latitude;
-        _longitude = position.longitude;
-      });
+      _setCoordinateLocation(position.latitude, position.longitude);
     } catch (error) {
       if (mounted) {
         _showMessage(error.toString());
@@ -929,10 +934,7 @@ class _ValuationInputScreenState extends State<ValuationInputScreen> {
     if (location == null || !mounted) {
       return;
     }
-    setState(() {
-      _latitude = location.latitude;
-      _longitude = location.longitude;
-    });
+    _setCoordinateLocation(location.latitude, location.longitude);
   }
 
   Future<void> _analyzeProperty() async {
@@ -994,6 +996,76 @@ class _ValuationInputScreenState extends State<ValuationInputScreen> {
       ..showSnackBar(
         SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
       );
+  }
+
+  bool get _hasValidCoordinates =>
+      _latitude != null &&
+      _longitude != null &&
+      _isCoordinateInRange(_latitude!, -90, 90) &&
+      _isCoordinateInRange(_longitude!, -180, 180);
+
+  String? get _latitudeErrorText => _coordinateError(
+    value: _latitudeController.text,
+    label: 'Latitude',
+    minimum: -90,
+    maximum: 90,
+  );
+
+  String? get _longitudeErrorText => _coordinateError(
+    value: _longitudeController.text,
+    label: 'Longitude',
+    minimum: -180,
+    maximum: 180,
+  );
+
+  void _setCoordinateLocation(double latitude, double longitude) {
+    setState(() {
+      _latitude = latitude;
+      _longitude = longitude;
+      _latitudeController.text = latitude.toStringAsFixed(6);
+      _longitudeController.text = longitude.toStringAsFixed(6);
+    });
+  }
+
+  void _onCoordinateTextChanged(String _) {
+    final latitude = double.tryParse(_latitudeController.text.trim());
+    final longitude = double.tryParse(_longitudeController.text.trim());
+    setState(() {
+      if (latitude != null &&
+          longitude != null &&
+          _isCoordinateInRange(latitude, -90, 90) &&
+          _isCoordinateInRange(longitude, -180, 180)) {
+        _latitude = latitude;
+        _longitude = longitude;
+      } else {
+        _latitude = null;
+        _longitude = null;
+      }
+    });
+  }
+
+  String? _coordinateError({
+    required String value,
+    required String label,
+    required double minimum,
+    required double maximum,
+  }) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    final parsed = double.tryParse(trimmed);
+    if (parsed == null) {
+      return '$label must be a number.';
+    }
+    if (!_isCoordinateInRange(parsed, minimum, maximum)) {
+      return '$label must be between ${minimum.toInt()} and ${maximum.toInt()}.';
+    }
+    return null;
+  }
+
+  bool _isCoordinateInRange(double value, double minimum, double maximum) {
+    return value >= minimum && value <= maximum;
   }
 }
 
@@ -1462,39 +1534,38 @@ class _HierarchyConnector extends StatelessWidget {
   }
 }
 
-class _CoordinateCard extends StatelessWidget {
-  const _CoordinateCard({required this.label, required this.value});
+class _CoordinateTextField extends StatelessWidget {
+  const _CoordinateTextField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.errorText,
+    required this.onChanged,
+  });
 
+  final TextEditingController controller;
   final String label;
-  final String value;
+  final String hint;
+  final String? errorText;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundPrimary.withValues(alpha: 0.46),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(
+        decimal: true,
+        signed: true,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.textMuted,
-              fontSize: 10,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9\.\-]')),
+      ],
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: const Icon(Icons.my_location_outlined),
+        errorText: errorText,
       ),
     );
   }

@@ -1,0 +1,376 @@
+compound_name,count,dataset
+The City,13014,residential_rent
+The View,1840,residential_rent
+Unknown,1038,residential_rent
+Do,1020,residential_rent
+Ion,863,residential_rent
+Fifth Square,650,residential_rent
+Mountain View Hyde Park,297,residential_rent
+District 5,171,residential_rent
+Ever New Cairo,166,residential_rent
+The 8,105,residential_rent
+Madinaty,98,residential_rent
+Stone Park,50,residential_rent
+The Residence,46,residential_rent
+Zahra,45,residential_rent
+Ira,44,residential_rent
+Go Heliopolis,43,residential_rent
+Ev,42,residential_rent
+El Patio 7,36,residential_rent
+Sodic East,35,residential_rent
+Red,32,residential_rent
+Marassi,32,residential_rent
+City View,31,residential_rent
+Zayed Regency,30,residential_rent
+I Sheraton,30,residential_rent
+White,23,residential_rent
+Terrace,19,residential_rent
+Ons,18,residential_rent
+Karma Residence,15,residential_rent
+Kin,14,residential_rent
+Rouh,9,residential_rent
+Amwaj,7,residential_rent
+Sawary,7,residential_rent
+The Ridge Compound,6,residential_rent
+Arina,4,residential_rent
+Hyde Park Central,3,residential_rent
+Gaia,3,residential_rent
+Ori,3,residential_rent
+Valore Smouha,2,residential_rent
+Palm Hills New Cairo,2,residential_rent
+Hacienda Red,2,residential_rent
+Eko,2,residential_rent
+Alex West,2,residential_rent
+Atrio,2,residential_rent
+Andalus,1,residential_rent
+Arabesque (Fustat),1,residential_rent
+Veranda Smouha,1,residential_rent
+Karmell,1,residential_rent
+Fanadir Bay,1,residential_rent
+Aljar Sheraton,1,residential_rent
+The Key,1,residential_rent
+La Vista Bay,1,residential_rent
+Mada,1,residential_rent
+Caesar,1,residential_rent
+Porto New Cairo,1,residential_rent
+Mee,1,residential_rent
+Via,1,residential_rent
+The City,10826,residential_sale
+Red,1631,residential_sale
+The View,1361,residential_sale
+Unknown,532,residential_sale
+Do,519,residential_sale
+Ion,462,residential_sale
+Phia Il Monte Galala,362,residential_sale
+Fifth Square,331,residential_sale
+Rouh,287,residential_sale
+Marassi,279,residential_sale
+The Residence,251,residential_sale
+Mountain View Hyde Park,220,residential_sale
+District 5,172,residential_sale
+Arina,156,residential_sale
+Sodic East,145,residential_sale
+La Vista 6,114,residential_sale
+Ever New Cairo,96,residential_sale
+The 8,95,residential_sale
+Tala,74,residential_sale
+Soul,63,residential_sale
+Karmell,62,residential_sale
+Madinaty,58,residential_sale
+Stone Park,56,residential_sale
+June,51,residential_sale
+Zahra,46,residential_sale
+La Vista Bay,43,residential_sale
+La Vista Ras El Hekma,42,residential_sale
+Amwaj,42,residential_sale
+Ons,41,residential_sale
+Telal Sokhna,40,residential_sale
+Ramla,40,residential_sale
+Lasirena Palm Beach,39,residential_sale
+Go Heliopolis,36,residential_sale
+D-Bay North Coast,34,residential_sale
+White,32,residential_sale
+El Patio 7,31,residential_sale
+Stoda Sheraton Compound,31,residential_sale
+Azha North Coast,31,residential_sale
+Ogami Ras El Hekma,28,residential_sale
+Beit Al Bahr,27,residential_sale
+Blue Blue,26,residential_sale
+Karma Residence,26,residential_sale
+Alex West,26,residential_sale
+Hacienda West,26,residential_sale
+Hacienda Waters,25,residential_sale
+Sawary,25,residential_sale
+Remal North Coast (Ras EL Hekma),25,residential_sale
+Solana East,25,residential_sale
+Esse Residence in Sarai,24,residential_sale
+Seashore,24,residential_sale
+Gaia,23,residential_sale
+Hills Of One,22,residential_sale
+Crescent Walk,22,residential_sale
+Ev,21,residential_sale
+Kin,21,residential_sale
+Jade Park,21,residential_sale
+The Marq,20,residential_sale
+Palm Hills New Cairo,20,residential_sale
+Telal North Coast,18,residential_sale
+Porto New Cairo,18,residential_sale
+Bleu Vert,17,residential_sale
+Lasirena North Coast,15,residential_sale
+La Vista Gardens,14,residential_sale
+Mar Bay Ras El Hekma,14,residential_sale
+Cape Bay,13,residential_sale
+East Vale,13,residential_sale
+DeJoya 4,12,residential_sale
+SeaShell Playa,12,residential_sale
+I Sheraton,12,residential_sale
+Westview Residence,12,residential_sale
+Salt,12,residential_sale
+Hyde Park Central,12,residential_sale
+Ira,12,residential_sale
+Park View Haptown,10,residential_sale
+La Verde Casette,10,residential_sale
+Zayed Regency,10,residential_sale
+The Crest,10,residential_sale
+Cali Coast,10,residential_sale
+Atrio,10,residential_sale
+Rewaya,9,residential_sale
+Isola Sheraton,9,residential_sale
+Youd,9,residential_sale
+Seasons Residence,8,residential_sale
+Jiwar,8,residential_sale
+The Axis,8,residential_sale
+La Colina,8,residential_sale
+Murano Wadi Degla,8,residential_sale
+Little Venice,8,residential_sale
+Key Of Greens,8,residential_sale
+Vee Muruj,8,residential_sale
+Safia  Ras El Hekma,8,residential_sale
+Canyon 8,7,residential_sale
+Valore Smouha,7,residential_sale
+Azzurra,7,residential_sale
+La Capitale,6,residential_sale
+Fanadir Bay,6,residential_sale
+Cityzen,6,residential_sale
+Blumar El Sokhna,6,residential_sale
+Jefaira Quayside,6,residential_sale
+Lake West 4,6,residential_sale
+Najm,6,residential_sale
+Caesar,6,residential_sale
+The Ridge Compound,6,residential_sale
+Granville,6,residential_sale
+La Vista Cascada,6,residential_sale
+Tawny,6,residential_sale
+Rock Yard,6,residential_sale
+Lumia Residence,5,residential_sale
+Stella Di Mare,5,residential_sale
+Belva Sheikh Zayed Compound,5,residential_sale
+Seazen,4,residential_sale
+La Vista Ray,4,residential_sale
+Koun,4,residential_sale
+Acasa Mia,4,residential_sale
+City View,4,residential_sale
+Aljar Sheraton,4,residential_sale
+Sheya Residence In Sarai,4,residential_sale
+Bella Vento Galala Ain Sokhna,4,residential_sale
+Naia Bay,4,residential_sale
+Silvia,4,residential_sale
+Plage,4,residential_sale
+Elite West,4,residential_sale
+Mee,4,residential_sale
+Selena,4,residential_sale
+Marseilia Beach 4,4,residential_sale
+Lagoons New Capital,3,residential_sale
+Rhodes,3,residential_sale
+Ivory Muruj,3,residential_sale
+Glee,3,residential_sale
+Solare,3,residential_sale
+Rare,3,residential_sale
+Crysta,3,residential_sale
+North Code,3,residential_sale
+Boho El Sokhna,3,residential_sale
+Grand Lane,3,residential_sale
+Hacienda Red,3,residential_sale
+Lake West 2,3,residential_sale
+Riviera Beach,3,residential_sale
+OIA Compound,3,residential_sale
+Noll,2,residential_sale
+Kai Sokhna,2,residential_sale
+Isola centra,2,residential_sale
+Playa Town,2,residential_sale
+Scenes,2,residential_sale
+Triangle,2,residential_sale
+Eastville,2,residential_sale
+Al Sokhna Hills,2,residential_sale
+Saada North Coast Compound,2,residential_sale
+Avelin,2,residential_sale
+Furl Jefaira,2,residential_sale
+Shababeek,2,residential_sale
+Haven,2,residential_sale
+Park Lane,2,residential_sale
+Ray Residence,2,residential_sale
+Diplo East,2,residential_sale
+Bungalows,2,residential_sale
+Laguna Bay,2,residential_sale
+Summer,2,residential_sale
+Bianchi Ilios,2,residential_sale
+Notion,2,residential_sale
+Lasirena Bay,2,residential_sale
+Ceaser,2,residential_sale
+Rivan,2,residential_sale
+El Patio Vera,2,residential_sale
+Q North,1,residential_sale
+Bella East,1,residential_sale
+Stella Di Mare 2,1,residential_sale
+Una Compound,1,residential_sale
+The Lark Residence,1,residential_sale
+La Vita North Coast,1,residential_sale
+Bella Romance,1,residential_sale
+East Tower,1,residential_sale
+Al Dau Heights,1,residential_sale
+Waterway East,1,residential_sale
+Ori,1,residential_sale
+Carnelia Ain Sokhna,1,residential_sale
+The Crown,1,residential_sale
+Marina Wadi Degla,1,residential_sale
+The Pearl,1,residential_sale
+The Key,1,residential_sale
+Oro,1,residential_sale
+Ravie,1,residential_sale
+Aroma El sokhna,1,residential_sale
+Golf Town,1,residential_sale
+Cairo Gate,1,residential_sale
+Hacienda Blue,1,residential_sale
+De Joya 2,1,residential_sale
+The Waterway North Coast,1,residential_sale
+Coral Hills,1,residential_sale
+Azzar Islands,1,residential_sale
+Baymount,1,residential_sale
+Nest,1,residential_sale
+Atika,1,residential_sale
+Terrace,1,residential_sale
+Entrada,1,residential_sale
+Kairo,1,residential_sale
+G-Bay,1,residential_sale
+Elora,1,residential_sale
+North House,1,residential_sale
+Valore Sheraton,1,residential_sale
+Bellagio,1,residential_sale
+Nurai,1,residential_sale
+La Vida,1,residential_sale
+Club Park,1,residential_sale
+Dejoya Villa,1,residential_sale
+The City,7175,commercial_rent
+Unknown,1658,commercial_rent
+Do,897,commercial_rent
+Fifth Square,491,commercial_rent
+District 5,420,commercial_rent
+Go Heliopolis,382,commercial_rent
+Zahra,278,commercial_rent
+I Sheraton,240,commercial_rent
+The View,205,commercial_rent
+Ion,193,commercial_rent
+Ever New Cairo,143,commercial_rent
+The 8,114,commercial_rent
+The Ridge Compound,35,commercial_rent
+Madinaty,22,commercial_rent
+Isola Sheraton,19,commercial_rent
+Ons,14,commercial_rent
+The Residence,11,commercial_rent
+Sodic East,11,commercial_rent
+Oro,9,commercial_rent
+Red,7,commercial_rent
+Kin,6,commercial_rent
+Stoda Sheraton Compound,6,commercial_rent
+Mee,5,commercial_rent
+Cairo Gate,4,commercial_rent
+Ori,4,commercial_rent
+Ev,3,commercial_rent
+Glee,3,commercial_rent
+Ira,3,commercial_rent
+Aljar Sheraton,2,commercial_rent
+Arina,2,commercial_rent
+Marassi,1,commercial_rent
+Lumia Residence,1,commercial_rent
+Crysta,1,commercial_rent
+Zayed Regency,1,commercial_rent
+Palm Hills New Cairo,1,commercial_rent
+Granville,1,commercial_rent
+Stone Park,1,commercial_rent
+Valore Sheraton,1,commercial_rent
+Mist,1,commercial_rent
+Rouh,1,commercial_rent
+Rock Yard,1,commercial_rent
+Caesar,1,commercial_rent
+The 101,1,commercial_rent
+Mountain View Hyde Park,1,commercial_rent
+Valore Smouha,1,commercial_rent
+The City,5291,commercial_sale
+Unknown,921,commercial_sale
+Do,783,commercial_sale
+Fifth Square,179,commercial_sale
+Go Heliopolis,162,commercial_sale
+Zahra,161,commercial_sale
+The View,149,commercial_sale
+The 8,132,commercial_sale
+District 5,123,commercial_sale
+Ion,115,commercial_sale
+Madinaty,71,commercial_sale
+Ever New Cairo,48,commercial_sale
+I Sheraton,43,commercial_sale
+Isola Sheraton,36,commercial_sale
+Sawary,29,commercial_sale
+Solana East,24,commercial_sale
+Entrada,20,commercial_sale
+Zahya,15,commercial_sale
+The Ridge Compound,14,commercial_sale
+Red,11,commercial_sale
+Glee,10,commercial_sale
+Ori,10,commercial_sale
+East Tower,8,commercial_sale
+Noi,7,commercial_sale
+Stoda Sheraton Compound,6,commercial_sale
+DeJoya 4,6,commercial_sale
+Kin,6,commercial_sale
+Oro,6,commercial_sale
+Sodic East,5,commercial_sale
+Mee,5,commercial_sale
+The Residence,5,commercial_sale
+Caesar,4,commercial_sale
+Vee Muruj,4,commercial_sale
+Zayed Regency,3,commercial_sale
+Ira,3,commercial_sale
+Mada,3,commercial_sale
+Green Plaza,3,commercial_sale
+Ons,2,commercial_sale
+Atrio,2,commercial_sale
+The Axis,2,commercial_sale
+Ev,2,commercial_sale
+Hyde Park Central,2,commercial_sale
+The 101,2,commercial_sale
+Oia Towers,2,commercial_sale
+Park Lane,2,commercial_sale
+Hills Of One,2,commercial_sale
+Moraya,2,commercial_sale
+Lake West 2,2,commercial_sale
+Crysta,2,commercial_sale
+Una Compound,2,commercial_sale
+Stau,2,commercial_sale
+The Marq,2,commercial_sale
+Waterway East,2,commercial_sale
+La Verde Casette,1,commercial_sale
+Granville,1,commercial_sale
+White,1,commercial_sale
+Nurai,1,commercial_sale
+OIA Compound,1,commercial_sale
+Atika,1,commercial_sale
+Cairo Gate,1,commercial_sale
+Dejoya Villa,1,commercial_sale
+Hope,1,commercial_sale
+Nest,1,commercial_sale
+Ivory Muruj,1,commercial_sale
+Porto New Cairo,1,commercial_sale
+Salt,1,commercial_sale
+Azzar,1,commercial_sale
+Arina,1,commercial_sale
+Tala,1,commercial_sale

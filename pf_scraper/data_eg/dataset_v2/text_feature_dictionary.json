@@ -1,0 +1,23 @@
+{
+  "is_furnished": "(?i)\\b(?<!un)furnished\\b|مفروش|فرش",
+  "has_garden": "(?i)\\bgarden\\b|حديقة|private garden",
+  "sea_view": "(?i)sea view|فيو بحر|مطلة على البحر",
+  "pool_view": "(?i)\\bpool\\b|حمام سباحة|بيسين",
+  "corner_unit": "(?i)\\bcorner\\b|ناصية",
+  "fully_finished": "(?i)fully finished|تشطيب كامل|سوبر لوكس|ultra super lux",
+  "core_shell": "(?i)core and shell|core & shell|طوب احمر|بدون تشطيب",
+  "semi_furnished": "(?i)semi furnished|نصف مفروش",
+  "hotel_apartment": "(?i)hotel apartment|شقة فندقية|فندقي",
+  "luxury": "(?i)\\bluxury\\b|فاخر|vip",
+  "prime_location": "(?i)prime location|موقع مميز",
+  "is_duplex": "(?i)\\bduplex\\b|دوبلكس",
+  "is_penthouse": "(?i)\\bpenthouse\\b|بنتهاوس|رووف",
+  "is_ground_floor": "(?i)ground floor|دور ارضي|ارضي",
+  "is_clinic": "(?i)\\bclinic\\b|عيادة",
+  "is_office": "(?i)\\boffice\\b|مكتب",
+  "is_shop": "(?i)\\bshop\\b|محل|تجارى|تجاري",
+  "is_admin": "(?i)\\badmin\\b|اداري",
+  "has_nanny_room": "(?i)\\bnanny\\b|\\bmaid\\b|غرفة مربية|غرفة خادمة",
+  "has_driver_room": "(?i)\\bdriver\\b|غرفة سائق",
+  "has_private_entrance": "(?i)private entrance|مدخل خاص"
+}

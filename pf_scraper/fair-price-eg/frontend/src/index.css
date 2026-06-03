@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+@theme {
+  --color-on-secondary-container: #b0b2ff;
+  --color-surface-dim: #111417;
+  --color-secondary-fixed: #e1e0ff;
+  --color-on-error-container: #ffdad6;
+  --color-tertiary-fixed-dim: #4edea3;
+  --color-surface-variant: #323539;
+  --color-primary-container: #00f2ff;
+  --color-inverse-primary: #00696f;
+  --color-tertiary: #e1ffec;
+  --color-surface-bright: #37393d;
+  --color-on-secondary-fixed: #07006c;
+  --color-surface: #111417;
+  --color-surface-container: #1d2023;
+  --color-secondary: #c0c1ff;
+  --color-primary-fixed-dim: #00dbe7;
+  --color-outline-variant: #3a494b;
+  --color-inverse-on-surface: #2e3134;
+  --color-surface-container-lowest: #0c0e12;
+  --color-on-tertiary-fixed: #002113;
+  --color-tertiary-fixed: #6ffbbe;
+  --color-on-primary-fixed-variant: #004f54;
+  --color-on-error: #690005;
+  --color-error: #ffb4ab;
+  --color-tertiary-container: #67f4b7;
+  --color-surface-container-low: #191c1f;
+  --color-inverse-surface: #e1e2e7;
+  --color-outline: #849495;
+  --color-error-container: #93000a;
+  --color-background: #111417;
+  --color-on-surface-variant: #b9cacb;
+  --color-primary-fixed: #74f5ff;
+  --color-on-tertiary: #003824;
+  --color-surface-container-high: #282a2e;
+  --color-on-surface: #e1e2e7;
+  --color-on-secondary: #1000a9;
+  --color-secondary-container: #3131c0;
+  --color-on-tertiary-container: #006e4b;
+  --color-secondary-fixed-dim: #c0c1ff;
+  --color-on-tertiary-fixed-variant: #005236;
+  --color-on-primary-fixed: #002022;
+  --color-primary: #e1fdff;
+  --color-on-secondary-fixed-variant: #2f2ebe;
+  --color-on-primary-container: #006a71;
+  --color-on-primary: #00363a;
+  --color-on-background: #e1e2e7;
+  --color-surface-tint: #00dbe7;
+  --color-surface-container-highest: #323539;
+
+  --font-body-md: "Geist", ui-sans-serif, system-ui;
+  --font-headline-lg: "Geist", ui-sans-serif, system-ui;
+  --font-headline-lg-mobile: "Geist", ui-sans-serif, system-ui;
+  --font-data-tabular: "Geist", ui-sans-serif, system-ui;
+  --font-display-lg: "Geist", ui-sans-serif, system-ui;
+  --font-label-caps: "JetBrains Mono", ui-monospace, SFMono-Regular;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-on-background min-h-screen overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: rgba(17, 20, 23, 0.58);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-card {
+    background: rgba(29, 32, 35, 0.64);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border-top: 1px solid rgba(0, 219, 231, 0.18);
+    border-left: 1px solid rgba(0, 219, 231, 0.08);
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.34);
+  }
+  
+  .glass-card-floating {
+    background: rgba(29, 32, 35, 0.48);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+  }
+  
+  .glass-card-floating::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    z-index: -1;
+    margin: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(0, 219, 231, 0.18) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(0,0,0,0) 100%);
+  }
+
+  .btn-holo {
+    position: relative;
+    background: rgba(0, 219, 231, 0.08);
+    border: 1px solid #00dbe7;
+    color: #e1fdff;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-holo::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 219, 231, 0.18), transparent);
+    transition: all 0.5s ease;
+  }
+  
+  .btn-holo:hover::before {
+    left: 100%;
+  }
+  
+  .btn-holo:hover {
+    box-shadow: 0 0 16px rgba(0, 219, 231, 0.20);
+    background: rgba(0, 219, 231, 0.14);
+  }
+
+  .glow-text {
+    text-shadow: 0 0 14px rgba(0, 219, 231, 0.22);
+  }
+
+  .orb-pulse {
+    animation: pulse-glow 5.6s infinite ease-in-out alternate;
+  }
+
+  @keyframes pulse-glow {
+    0% {
+      box-shadow: 0 0 16px rgba(0, 219, 231, 0.08), inset 0 0 16px rgba(78, 222, 163, 0.08);
+    }
+    100% {
+      box-shadow: 0 0 34px rgba(0, 219, 231, 0.18), inset 0 0 28px rgba(78, 222, 163, 0.14);
+      transform: scale(1.012);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orb-pulse,
+    .btn-holo::before {
+      animation: none;
+      transition-duration: 0.01ms;
+    }
+  }
+}

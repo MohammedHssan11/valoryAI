@@ -51,8 +51,8 @@ void main() {
   group('WorkspaceStateManager', () {
     test('manages active workspace singleton state', () {
       final manager = WorkspaceStateManager.instance;
-      expect(manager.activeWorkspace, isNotNull);
-      expect(manager.activeWorkspace!.name, 'New Cairo Premium Portfolio');
+      manager.clearActiveWorkspace();
+      expect(manager.activeWorkspace, isNull);
 
       final now = DateTime.now();
       final customWorkspace = Workspace(
@@ -76,10 +76,12 @@ void main() {
       expect(notified, isTrue);
 
       notified = false;
-      manager.updateActiveWorkspaceName('Updated Custom W', 'New Desc W');
+      manager.updateActiveWorkspaceName('Updated Custom W');
       expect(manager.activeWorkspace!.name, 'Updated Custom W');
-      expect(manager.activeWorkspace!.description, 'New Desc W');
       expect(notified, isTrue);
+
+      manager.clearActiveWorkspace();
+      expect(manager.activeWorkspace, isNull);
     });
   });
 }

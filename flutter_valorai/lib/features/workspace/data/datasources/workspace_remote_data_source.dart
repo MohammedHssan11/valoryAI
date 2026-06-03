@@ -1,44 +1,22 @@
 import 'package:dio/dio.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../../../core/network/api_client.dart';
 
 class WorkspaceRemoteDataSource {
   WorkspaceRemoteDataSource({Dio? dio})
-      : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: const String.fromEnvironment(
-                  'VALORAI_API_BASE_URL',
-                  defaultValue: 'http://localhost:8000',
-                ),
-                connectTimeout: const Duration(seconds: 12),
-                receiveTimeout: const Duration(seconds: 30),
-                headers: const {'Content-Type': 'application/json'},
-              ),
-            );
+    : _dio = dio ?? ApiClient.instance.authenticatedDio;
 
   final Dio _dio;
 
-  Future<String?> _getToken() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      return currentUser.getIdToken();
-    }
-    return null;
-  }
-
   Future<List<Map<String, dynamic>>> getWorkspaces() async {
     try {
-      final token = await _getToken();
-      final headers = token != null ? {'Authorization': 'Bearer $token'} : const <String, dynamic>{};
-
-      final response = await _dio.get<List<dynamic>>(
-        '/v1/copilot/workspaces',
-        options: Options(headers: headers),
-      );
+      final response = await _dio.get<List<dynamic>>('/v1/copilot/workspaces');
 
       final data = response.data;
       if (data == null) return [];
-      return data.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+      return data
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
     } on DioException catch (error) {
       throw WorkspaceException(_messageFor(error));
     }
@@ -46,18 +24,16 @@ class WorkspaceRemoteDataSource {
 
   Future<Map<String, dynamic>> createWorkspace(String name) async {
     try {
-      final token = await _getToken();
-      final headers = token != null ? {'Authorization': 'Bearer $token'} : const <String, dynamic>{};
-
       final response = await _dio.post<Map<String, dynamic>>(
         '/v1/copilot/workspaces',
         data: {'name': name},
-        options: Options(headers: headers),
       );
 
       final data = response.data;
       if (data == null) {
-        throw const WorkspaceException('No data returned from workspace creation.');
+        throw const WorkspaceException(
+          'No data returned from workspace creation.',
+        );
       }
       return data;
     } on DioException catch (error) {
@@ -67,18 +43,16 @@ class WorkspaceRemoteDataSource {
 
   Future<Map<String, dynamic>> updateWorkspace(int id, String name) async {
     try {
-      final token = await _getToken();
-      final headers = token != null ? {'Authorization': 'Bearer $token'} : const <String, dynamic>{};
-
       final response = await _dio.put<Map<String, dynamic>>(
         '/v1/copilot/workspaces/$id',
         data: {'name': name},
-        options: Options(headers: headers),
       );
 
       final data = response.data;
       if (data == null) {
-        throw const WorkspaceException('No data returned from workspace update.');
+        throw const WorkspaceException(
+          'No data returned from workspace update.',
+        );
       }
       return data;
     } on DioException catch (error) {
@@ -88,15 +62,12 @@ class WorkspaceRemoteDataSource {
 
   Future<bool> deleteWorkspace(int id) async {
     try {
-      final token = await _getToken();
-      final headers = token != null ? {'Authorization': 'Bearer $token'} : const <String, dynamic>{};
-
       final response = await _dio.delete<Map<String, dynamic>>(
         '/v1/copilot/workspaces/$id',
-        options: Options(headers: headers),
       );
 
-      return response.statusCode == 200 || response.data?['status'] == 'deleted';
+      return response.statusCode == 200 ||
+          response.data?['status'] == 'deleted';
     } on DioException catch (error) {
       throw WorkspaceException(_messageFor(error));
     }
@@ -104,20 +75,17 @@ class WorkspaceRemoteDataSource {
 
   Future<List<Map<String, dynamic>>> getWorkspaceProperties(int id) async {
     try {
-      final token = await _getToken();
-      final headers = token != null ? {'Authorization': 'Bearer $token'} : const <String, dynamic>{};
-
       final response = await _dio.get<List<dynamic>>(
         '/v1/copilot/workspaces/$id/properties',
-        options: Options(headers: headers),
       );
 
       final data = response.data;
       if (data == null) return [];
-      return data.map((item) => Map<String, dynamic>.from(item as Map)).toList();
-    } on DioException catch (_) {
-      // Fallback to empty properties if this fails or is not ready
-      return [];
+      return data
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+    } on DioException catch (error) {
+      throw WorkspaceException(_messageFor(error));
     }
   }
 

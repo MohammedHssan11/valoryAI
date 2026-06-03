@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'core/services/firebase/firebase_initializer.dart';
+import 'features/auth/presentation/state/auth_session_manager.dart';
 import 'app/router/app_router.dart';
 import 'app/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FirebaseInitializer.init();
+  await AuthSessionManager.instance.restoreSession();
   runApp(const ValorAIApp());
 }
 

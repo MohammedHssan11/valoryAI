@@ -1,0 +1,776 @@
+{
+  "residential_rent": {
+    "shape": {
+      "total_rows": 13606,
+      "features": 58
+    },
+    "metrics": {
+      "MAPE": 21.30857850486205,
+      "MAE": 18481.139645725714,
+      "RMSE": 69159.58677302788,
+      "R2": 0.4853062267268463,
+      "Median_Absolute_Error": 9244.12142387782
+    },
+    "feature_importance": [
+      {
+        "feature": "h3_res8",
+        "importance": 30.57077756101201
+      },
+      {
+        "feature": "size",
+        "importance": 13.539925965077066
+      },
+      {
+        "feature": "longitude",
+        "importance": 9.668517331847386
+      },
+      {
+        "feature": "property_type",
+        "importance": 8.224507244536197
+      },
+      {
+        "feature": "bathrooms",
+        "importance": 7.620647521875437
+      },
+      {
+        "feature": "latitude",
+        "importance": 7.017809314946027
+      },
+      {
+        "feature": "has_amenity_bk",
+        "importance": 4.440036741943564
+      },
+      {
+        "feature": "is_furnished",
+        "importance": 2.320730962737395
+      },
+      {
+        "feature": "compound_name",
+        "importance": 1.8413596635943574
+      },
+      {
+        "feature": "h3_res9",
+        "importance": 1.569370872494088
+      },
+      {
+        "feature": "amenities_count",
+        "importance": 1.5193240835522375
+      },
+      {
+        "feature": "bedrooms",
+        "importance": 1.3054542741816917
+      },
+      {
+        "feature": "has_amenity_pp",
+        "importance": 1.0611567558219839
+      },
+      {
+        "feature": "page",
+        "importance": 0.9580701273216977
+      },
+      {
+        "feature": "has_amenity_ac",
+        "importance": 0.8778921789454629
+      },
+      {
+        "feature": "compound_frequency",
+        "importance": 0.8322398579403144
+      },
+      {
+        "feature": "has_amenity_st",
+        "importance": 0.7555556797897229
+      },
+      {
+        "feature": "semi_furnished",
+        "importance": 0.5929715397611675
+      },
+      {
+        "feature": "luxury",
+        "importance": 0.5495601346333354
+      },
+      {
+        "feature": "has_amenity_lb",
+        "importance": 0.5389890688297471
+      },
+      {
+        "feature": "pool_view",
+        "importance": 0.45069455277961507
+      },
+      {
+        "feature": "hotel_apartment",
+        "importance": 0.39806551971197646
+      },
+      {
+        "feature": "has_amenity_mr",
+        "importance": 0.3816091550695447
+      },
+      {
+        "feature": "compound_match_confidence",
+        "importance": 0.2937602401025315
+      },
+      {
+        "feature": "has_amenity_sy",
+        "importance": 0.2881678073821306
+      },
+      {
+        "feature": "has_amenity_se",
+        "importance": 0.2572987843331083
+      },
+      {
+        "feature": "has_amenity_vw",
+        "importance": 0.24357223963100896
+      },
+      {
+        "feature": "has_amenity_sp",
+        "importance": 0.23811229546878632
+      },
+      {
+        "feature": "has_garden",
+        "importance": 0.2033797045567328
+      },
+      {
+        "feature": "has_amenity_cp",
+        "importance": 0.17687823084879944
+      }
+    ],
+    "error_analysis_top5": [
+      {
+        "actual_price": 2349999.999999999,
+        "predicted_price": 282533.1381757985,
+        "error_pct": 87.97731326911496,
+        "size": 2100.0,
+        "property_type": "Palace",
+        "compound_name": "The City",
+        "h3_res8": "883e62d6c3fffff",
+        "h3_res9": "893e62d6c23ffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 1499999.9999999986,
+        "predicted_price": 427370.49997392256,
+        "error_pct": 71.5086333350718,
+        "size": 340.0,
+        "property_type": "Chalet",
+        "compound_name": "Marassi",
+        "h3_res8": "883f5bca37fffff",
+        "h3_res9": "893f5bca36bffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 399999.9999999999,
+        "predicted_price": 148056.58503864738,
+        "error_pct": 62.98585374033815,
+        "size": 400.0,
+        "property_type": "Villa",
+        "compound_name": "The City",
+        "h3_res8": "883e62ba97fffff",
+        "h3_res9": "893e62ba977ffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 564499.9999999998,
+        "predicted_price": 335013.9087923589,
+        "error_pct": 40.65298338487883,
+        "size": 500.0,
+        "property_type": "Villa",
+        "compound_name": "The City",
+        "h3_res8": "883e62bb59fffff",
+        "h3_res9": "893e6285b67ffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 499999.99999999977,
+        "predicted_price": 277285.71122437256,
+        "error_pct": 44.54285775512547,
+        "size": 687.0,
+        "property_type": "Villa",
+        "compound_name": "Unknown",
+        "h3_res8": "883e628ee5fffff",
+        "h3_res9": "893e628ee4bffff",
+        "geo_validation_status": "valid"
+      }
+    ]
+  },
+  "valerti_edge_case": {
+    "Apt_A_Basic_Prediction": 126220.89292241611,
+    "Apt_B_Premium_Prediction": 163075.98132311326,
+    "Premium_Difference": 36855.08840069715,
+    "Premium_Percent": 29.19888106270233
+  },
+  "residential_sale": {
+    "shape": {
+      "total_rows": 18076,
+      "features": 58
+    },
+    "metrics": {
+      "MAPE": 25.569472803034238,
+      "MAE": 3679260.1122149955,
+      "RMSE": 7237382.868992001,
+      "R2": 0.772974115366345,
+      "Median_Absolute_Error": 1791320.2443962954
+    },
+    "feature_importance": [
+      {
+        "feature": "size",
+        "importance": 37.26296655308726
+      },
+      {
+        "feature": "h3_res8",
+        "importance": 16.927485515980017
+      },
+      {
+        "feature": "property_type",
+        "importance": 11.874739838071928
+      },
+      {
+        "feature": "longitude",
+        "importance": 7.930254728035769
+      },
+      {
+        "feature": "latitude",
+        "importance": 5.214798757632926
+      },
+      {
+        "feature": "page",
+        "importance": 4.352161436593957
+      },
+      {
+        "feature": "bathrooms",
+        "importance": 2.6824124583152673
+      },
+      {
+        "feature": "amenities_count",
+        "importance": 2.1965730844043443
+      },
+      {
+        "feature": "h3_res9",
+        "importance": 1.986518325694347
+      },
+      {
+        "feature": "compound_name",
+        "importance": 1.5023295548279985
+      },
+      {
+        "feature": "bedrooms",
+        "importance": 0.9792693917647742
+      },
+      {
+        "feature": "compound_frequency",
+        "importance": 0.7984541271844706
+      },
+      {
+        "feature": "has_amenity_ac",
+        "importance": 0.763614220578282
+      },
+      {
+        "feature": "has_amenity_sy",
+        "importance": 0.48978263902731484
+      },
+      {
+        "feature": "has_amenity_pp",
+        "importance": 0.37431328295722827
+      },
+      {
+        "feature": "fully_finished",
+        "importance": 0.35669916563812587
+      },
+      {
+        "feature": "has_amenity_mr",
+        "importance": 0.3208037314581298
+      },
+      {
+        "feature": "compound_match_confidence",
+        "importance": 0.30816342475455794
+      },
+      {
+        "feature": "is_known_compound",
+        "importance": 0.30722183815161275
+      },
+      {
+        "feature": "has_amenity_se",
+        "importance": 0.29802446022756196
+      },
+      {
+        "feature": "has_amenity_vw",
+        "importance": 0.2923074962145665
+      },
+      {
+        "feature": "has_amenity_lb",
+        "importance": 0.26227433398985284
+      },
+      {
+        "feature": "has_amenity_ss",
+        "importance": 0.24540546221722534
+      },
+      {
+        "feature": "has_amenity_bw",
+        "importance": 0.22407008551875615
+      },
+      {
+        "feature": "is_furnished",
+        "importance": 0.2187866888830496
+      },
+      {
+        "feature": "has_garden",
+        "importance": 0.21855587823437644
+      },
+      {
+        "feature": "has_amenity_sp",
+        "importance": 0.21767917637934148
+      },
+      {
+        "feature": "has_amenity_st",
+        "importance": 0.20632611967751574
+      },
+      {
+        "feature": "has_amenity_co",
+        "importance": 0.19916238433344552
+      },
+      {
+        "feature": "has_amenity_bk",
+        "importance": 0.19727529394877907
+      }
+    ],
+    "error_analysis_top5": [
+      {
+        "actual_price": 119999999.9999999,
+        "predicted_price": 43321353.8200877,
+        "error_pct": 63.89887181659355,
+        "size": 310.0,
+        "property_type": "Villa",
+        "compound_name": "Red",
+        "h3_res8": "883e4e91b5fffff",
+        "h3_res9": "893e4e91b5bffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 119999999.9999999,
+        "predicted_price": 43358355.25876457,
+        "error_pct": 63.86803728436282,
+        "size": 310.0,
+        "property_type": "Villa",
+        "compound_name": "Red",
+        "h3_res8": "883e410089fffff",
+        "h3_res9": "893e410089bffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 97000000.0,
+        "predicted_price": 33293616.749966044,
+        "error_pct": 65.67668376292161,
+        "size": 374.0,
+        "property_type": "Villa",
+        "compound_name": "The City",
+        "h3_res8": "883e62ba97fffff",
+        "h3_res9": "893e62ba977ffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 110000000.00000012,
+        "predicted_price": 48193447.88854691,
+        "error_pct": 56.18777464677559,
+        "size": 565.0,
+        "property_type": "Villa",
+        "compound_name": "The City",
+        "h3_res8": "883e62894dfffff",
+        "h3_res9": "893e62894d7ffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 94499999.99999991,
+        "predicted_price": 34345360.50293963,
+        "error_pct": 63.655703171492426,
+        "size": 300.0,
+        "property_type": "Villa",
+        "compound_name": "Red",
+        "h3_res8": "883e4e9adbfffff",
+        "h3_res9": "893e4e9ada7ffff",
+        "geo_validation_status": "valid"
+      }
+    ]
+  },
+  "commercial_rent": {
+    "shape": {
+      "total_rows": 9844,
+      "features": 52
+    },
+    "metrics": {
+      "MAPE": 98.77652150329564,
+      "MAE": 48026.33585242866,
+      "RMSE": 85082.64300771517,
+      "R2": 0.39953783736596715,
+      "Median_Absolute_Error": 27316.266557084942
+    },
+    "feature_importance": [
+      {
+        "feature": "size",
+        "importance": 43.62810987882097
+      },
+      {
+        "feature": "longitude",
+        "importance": 8.642501643348103
+      },
+      {
+        "feature": "latitude",
+        "importance": 7.060612119102197
+      },
+      {
+        "feature": "h3_res8",
+        "importance": 6.513077599174115
+      },
+      {
+        "feature": "compound_match_confidence",
+        "importance": 6.092552694838454
+      },
+      {
+        "feature": "property_type",
+        "importance": 5.927361871373641
+      },
+      {
+        "feature": "compound_name",
+        "importance": 3.745054607068051
+      },
+      {
+        "feature": "bedrooms",
+        "importance": 3.0020028162447834
+      },
+      {
+        "feature": "amenities_count",
+        "importance": 2.568755542589906
+      },
+      {
+        "feature": "page",
+        "importance": 2.176376500703121
+      },
+      {
+        "feature": "h3_res9",
+        "importance": 1.7331180460895288
+      },
+      {
+        "feature": "is_known_compound",
+        "importance": 1.2718162730134346
+      },
+      {
+        "feature": "has_amenity_cp",
+        "importance": 1.0830028398873164
+      },
+      {
+        "feature": "compound_frequency",
+        "importance": 0.9499217642068015
+      },
+      {
+        "feature": "is_office",
+        "importance": 0.9025776353255615
+      },
+      {
+        "feature": "bathrooms",
+        "importance": 0.7817097852694758
+      },
+      {
+        "feature": "has_amenity_lb",
+        "importance": 0.7772512553858092
+      },
+      {
+        "feature": "has_amenity_dn",
+        "importance": 0.7195548180520427
+      },
+      {
+        "feature": "fully_finished",
+        "importance": 0.6898265706937471
+      },
+      {
+        "feature": "is_admin",
+        "importance": 0.36692263233300815
+      },
+      {
+        "feature": "has_amenity_cr",
+        "importance": 0.24905650974403132
+      },
+      {
+        "feature": "is_furnished",
+        "importance": 0.22564077600363158
+      },
+      {
+        "feature": "is_shop",
+        "importance": 0.17661741210641457
+      },
+      {
+        "feature": "has_amenity_sy",
+        "importance": 0.1388213128290297
+      },
+      {
+        "feature": "has_private_entrance",
+        "importance": 0.09472909421052107
+      },
+      {
+        "feature": "has_amenity_an",
+        "importance": 0.09450339962186881
+      },
+      {
+        "feature": "is_duplex",
+        "importance": 0.08398311628614803
+      },
+      {
+        "feature": "luxury",
+        "importance": 0.07406464138101951
+      },
+      {
+        "feature": "is_clinic",
+        "importance": 0.05735840120461552
+      },
+      {
+        "feature": "has_garden",
+        "importance": 0.030720469756239044
+      }
+    ],
+    "error_analysis_top5": [
+      {
+        "actual_price": 749999.9999999998,
+        "predicted_price": 65176.611427127966,
+        "error_pct": 91.30978514304961,
+        "size": 65.0,
+        "property_type": "Office Space",
+        "compound_name": "Madinaty",
+        "h3_res8": "883e62b0d1fffff",
+        "h3_res9": "893e62b0d07ffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 999999.9999999997,
+        "predicted_price": 322922.08386431023,
+        "error_pct": 67.70779161356897,
+        "size": 2200.0,
+        "property_type": "Warehouse",
+        "compound_name": "The City",
+        "h3_res8": "883e60493bfffff",
+        "h3_res9": "893e60493a3ffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 20000.000000000015,
+        "predicted_price": 660006.8704222831,
+        "error_pct": 3200.034352111413,
+        "size": 700.0,
+        "property_type": "Office Space",
+        "compound_name": "The City",
+        "h3_res8": "883e62b119fffff",
+        "h3_res9": "893e62b118bffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 25000.000000000004,
+        "predicted_price": 509288.1641397787,
+        "error_pct": 1937.1526565591146,
+        "size": 2200.0,
+        "property_type": "Warehouse",
+        "compound_name": "The City",
+        "h3_res8": "883e62b28bfffff",
+        "h3_res9": "893e62b28bbffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 800000.0000000005,
+        "predicted_price": 350620.5308418493,
+        "error_pct": 56.17243364476887,
+        "size": 1200.0,
+        "property_type": "Shop",
+        "compound_name": "The City",
+        "h3_res8": "883e628535fffff",
+        "h3_res9": "893e628534fffff",
+        "geo_validation_status": "valid"
+      }
+    ]
+  },
+  "commercial_sale": {
+    "shape": {
+      "total_rows": 7318,
+      "features": 50
+    },
+    "metrics": {
+      "MAPE": 67.99851932142887,
+      "MAE": 6603367.621469844,
+      "RMSE": 23905605.02101703,
+      "R2": 0.618508650347327,
+      "Median_Absolute_Error": 1940781.5115184493
+    },
+    "feature_importance": [
+      {
+        "feature": "size",
+        "importance": 42.146746090690954
+      },
+      {
+        "feature": "property_type",
+        "importance": 11.212304598122474
+      },
+      {
+        "feature": "longitude",
+        "importance": 8.995186754916983
+      },
+      {
+        "feature": "latitude",
+        "importance": 7.7674349252618295
+      },
+      {
+        "feature": "h3_res8",
+        "importance": 7.5365246131646595
+      },
+      {
+        "feature": "page",
+        "importance": 4.283974588488127
+      },
+      {
+        "feature": "h3_res9",
+        "importance": 2.8366872815436124
+      },
+      {
+        "feature": "compound_match_confidence",
+        "importance": 2.3493898443455707
+      },
+      {
+        "feature": "compound_name",
+        "importance": 2.058838890904092
+      },
+      {
+        "feature": "amenities_count",
+        "importance": 1.8527334215877214
+      },
+      {
+        "feature": "is_known_compound",
+        "importance": 1.5542278276103791
+      },
+      {
+        "feature": "bathrooms",
+        "importance": 1.2886518283399406
+      },
+      {
+        "feature": "bedrooms",
+        "importance": 1.2763949214687031
+      },
+      {
+        "feature": "compound_frequency",
+        "importance": 1.059186991028632
+      },
+      {
+        "feature": "is_shop",
+        "importance": 0.8730194800002298
+      },
+      {
+        "feature": "has_amenity_dn",
+        "importance": 0.5774304008680351
+      },
+      {
+        "feature": "is_clinic",
+        "importance": 0.30680390437014715
+      },
+      {
+        "feature": "has_amenity_cp",
+        "importance": 0.2764687316308727
+      },
+      {
+        "feature": "has_amenity_an",
+        "importance": 0.24084542684356383
+      },
+      {
+        "feature": "prime_location",
+        "importance": 0.22839404678279002
+      },
+      {
+        "feature": "is_office",
+        "importance": 0.21924037769007876
+      },
+      {
+        "feature": "is_ground_floor",
+        "importance": 0.21240457667578855
+      },
+      {
+        "feature": "has_amenity_lb",
+        "importance": 0.1786891438300605
+      },
+      {
+        "feature": "has_amenity_sy",
+        "importance": 0.16276405506835046
+      },
+      {
+        "feature": "is_admin",
+        "importance": 0.1616236771685014
+      },
+      {
+        "feature": "fully_finished",
+        "importance": 0.07960911455441962
+      },
+      {
+        "feature": "luxury",
+        "importance": 0.07435737439216879
+      },
+      {
+        "feature": "has_amenity_cr",
+        "importance": 0.06289741997950987
+      },
+      {
+        "feature": "has_garden",
+        "importance": 0.04478914600953716
+      },
+      {
+        "feature": "is_duplex",
+        "importance": 0.02774639500939905
+      }
+    ],
+    "error_analysis_top5": [
+      {
+        "actual_price": 449999999.9999995,
+        "predicted_price": 71124155.35115224,
+        "error_pct": 84.19463214418838,
+        "size": 466.0,
+        "property_type": "Whole Building",
+        "compound_name": "The City",
+        "h3_res8": "883e62b8d9fffff",
+        "h3_res9": "893e62b8d8fffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 400000000.0000001,
+        "predicted_price": 146462699.78470033,
+        "error_pct": 63.38432505382493,
+        "size": 3600.0,
+        "property_type": "Whole Building",
+        "compound_name": "Unknown",
+        "h3_res8": "883e628195fffff",
+        "h3_res9": "893e628194bffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 600000000.0000008,
+        "predicted_price": 354399599.09398746,
+        "error_pct": 40.93340015100217,
+        "size": 3000.0,
+        "property_type": "Whole Building",
+        "compound_name": "The City",
+        "h3_res8": "883e62ba57fffff",
+        "h3_res9": "893e62ba56bffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 94999999.99999987,
+        "predicted_price": 297798519.3373997,
+        "error_pct": 213.47212561831594,
+        "size": 4500.0,
+        "property_type": "Whole Building",
+        "compound_name": "Go Heliopolis",
+        "h3_res8": "883e628503fffff",
+        "h3_res9": "893e6285033ffff",
+        "geo_validation_status": "valid"
+      },
+      {
+        "actual_price": 249999999.99999985,
+        "predicted_price": 133793548.31139798,
+        "error_pct": 46.48258067544078,
+        "size": 1802.0,
+        "property_type": "Whole Building",
+        "compound_name": "The City",
+        "h3_res8": "883e62ba21fffff",
+        "h3_res9": "893e62ba20bffff",
+        "geo_validation_status": "valid"
+      }
+    ]
+  }
+}

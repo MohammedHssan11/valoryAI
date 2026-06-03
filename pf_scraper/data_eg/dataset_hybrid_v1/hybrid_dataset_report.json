@@ -1,0 +1,50 @@
+{
+  "residential_rent.parquet": {
+    "row_counts": 8846,
+    "null_percentages": {
+      "deterministic_price": 13.068053357449694
+    },
+    "confidence_distribution": {
+      "Medium": 4027,
+      "High": 1895,
+      "Low": 1768,
+      "ERROR": 1156
+    },
+    "tier_distribution": {
+      "5.0": 3337,
+      "4.0": 1509,
+      "3.0": 1095,
+      "1.0": 1083,
+      "2.0": 666
+    },
+    "residual_statistics": {
+      "mean_residual": 20785.966189856957,
+      "median_abs_residual": 15000.0,
+      "mean_residual_pct": 2.2988634032838253
+    }
+  },
+  "residential_sale.parquet": {
+    "row_counts": 13655,
+    "null_percentages": {
+      "deterministic_price": 41.53057488099597
+    },
+    "confidence_distribution": {
+      "ERROR": 5671,
+      "Medium": 4521,
+      "Low": 2088,
+      "High": 1375
+    },
+    "tier_distribution": {
+      "5.0": 2881,
+      "4.0": 2140,
+      "3.0": 1162,
+      "1.0": 979,
+      "2.0": 822
+    },
+    "residual_statistics": {
+      "mean_residual": 2435161.095566132,
+      "median_abs_residual": 1800000.0,
+      "mean_residual_pct": 12.485057343575283
+    }
+  }
+}

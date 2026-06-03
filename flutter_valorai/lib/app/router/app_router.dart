@@ -15,12 +15,30 @@ import '../../features/valuation/presentation/screens/comparable_explorer_screen
 import '../../features/copilot/presentation/screens/copilot_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/workspace/presentation/screens/workspace_selector_screen.dart';
+import '../../features/auth/presentation/state/auth_session_manager.dart';
 
 class AppRouter {
   AppRouter._();
 
   static final GoRouter router = GoRouter(
     initialLocation: RoutePaths.splash,
+    refreshListenable: AuthSessionManager.instance,
+    redirect: (context, state) {
+      final session = AuthSessionManager.instance;
+      final publicPaths = {
+        RoutePaths.splash,
+        RoutePaths.onboarding,
+        RoutePaths.login,
+        RoutePaths.signup,
+        RoutePaths.forgotPassword,
+      };
+      if (session.status != AuthSessionStatus.uninitialized &&
+          !session.isAuthenticated &&
+          !publicPaths.contains(state.matchedLocation)) {
+        return RoutePaths.login;
+      }
+      return null;
+    },
     routes: [
       GoRoute(
         path: RoutePaths.splash,

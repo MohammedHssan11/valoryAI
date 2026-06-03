@@ -1,0 +1,113 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fairprice}
+      POSTGRES_USER: ${POSTGRES_USER:-fairprice}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fairprice}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  db-bootstrap:
+    build: ./backend
+    environment:
+      ENV: ${APP_ENV:-production}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_JSON: ${LOG_JSON:-true}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-fairprice}:${POSTGRES_PASSWORD:-fairprice}@db:5432/${POSTGRES_DB:-fairprice}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be configured}
+      JWT_ISSUER: ${JWT_ISSUER:-valorai}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-valorai-api}
+      DB_STARTUP_RETRIES: ${DB_STARTUP_RETRIES:-30}
+      DB_STARTUP_RETRY_SECONDS: ${DB_STARTUP_RETRY_SECONDS:-1}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./data:/data:ro
+    command: ["bash", "-c", "python -m app.scripts.run_migrations && python -m app.scripts.load_rent_csv"]
+    restart: "no"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      ENV: ${APP_ENV:-production}
+      DEBUG: ${DEBUG:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_JSON: ${LOG_JSON:-true}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-fairprice}:${POSTGRES_PASSWORD:-fairprice}@db:5432/${POSTGRES_DB:-fairprice}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be configured}
+      JWT_ISSUER: ${JWT_ISSUER:-valorai}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-valorai-api}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:?FIREBASE_PROJECT_ID must be configured}
+      DB_STARTUP_RETRIES: ${DB_STARTUP_RETRIES:-30}
+      DB_STARTUP_RETRY_SECONDS: ${DB_STARTUP_RETRY_SECONDS:-1}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000;http://127.0.0.1:3000}
+      API_REQUEST_TIMEOUT_SECONDS: ${API_REQUEST_TIMEOUT_SECONDS:-20}
+      MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-65536}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-120}
+      SLOW_QUERY_MS: ${SLOW_QUERY_MS:-250}
+      SLOW_REQUEST_MS: ${SLOW_REQUEST_MS:-1500}
+      API_LATENCY_SLO_MS: ${API_LATENCY_SLO_MS:-1200}
+      VALUATION_LATENCY_SLO_MS: ${VALUATION_LATENCY_SLO_MS:-1500}
+      COPILOT_NARRATION_ENABLED: ${COPILOT_NARRATION_ENABLED:-false}
+      COPILOT_NARRATION_INTENTS: ${COPILOT_NARRATION_INTENTS:-}
+      COPILOT_GEMINI_API_KEY: ${COPILOT_GEMINI_API_KEY:-}
+      COPILOT_GEMINI_DATA_GOVERNANCE_ACKNOWLEDGED: ${COPILOT_GEMINI_DATA_GOVERNANCE_ACKNOWLEDGED:-false}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      db-bootstrap:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/data:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: "/"
+        VITE_APP_ENV: "production"
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  staging-smoke:
+    profiles: ["staging"]
+    build: ./backend
+    environment:
+      ENV: ${APP_ENV:-staging}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_JSON: ${LOG_JSON:-true}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-fairprice}:${POSTGRES_PASSWORD:-fairprice}@db:5432/${POSTGRES_DB:-fairprice}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be configured}
+      JWT_ISSUER: ${JWT_ISSUER:-valorai}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-valorai-api}
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: ["python", "-m", "app.scripts.staging_smoke", "--base-url", "http://backend:8000"]
+    restart: "no"
+
+volumes:
+  db_data:

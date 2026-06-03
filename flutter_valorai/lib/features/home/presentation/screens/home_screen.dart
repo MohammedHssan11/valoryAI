@@ -7,66 +7,81 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../workspace/presentation/state/workspace_state_manager.dart';
+import '../../data/datasources/home_remote_data_source.dart';
+import '../../data/repositories/home_repository.dart';
+import '../../domain/models/home_dashboard.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  static const _portfolioItems = [
-    _PortfolioItem(
-      label: 'Properties Tracked',
-      value: '14',
-      icon: Icons.home_work_outlined,
-    ),
-    _PortfolioItem(
-      label: 'Saved Valuations',
-      value: '8',
-      icon: Icons.bookmark_outline_rounded,
-    ),
-    _PortfolioItem(
-      label: 'Copilot Sessions',
-      value: '24',
-      icon: Icons.auto_awesome_outlined,
-    ),
-  ];
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
-  static const _marketSignals = [
-    _MarketSignal(name: 'New Cairo Demand', status: 'High'),
-    _MarketSignal(name: 'Zayed Demand', status: 'Rising'),
-    _MarketSignal(name: 'North Coast Activity', status: 'Active'),
-  ];
+class _HomeScreenState extends State<HomeScreen> {
+  final HomeRepository _repository = HomeRepository(HomeRemoteDataSource());
 
-  static const _recentValuations = [
-    _RecentValuation(
-      propertyType: 'Apartment',
-      area: 'New Cairo',
-      estimatedValue: 'EGP 8.4M',
-      date: 'Today',
-      icon: Icons.apartment_rounded,
-    ),
-    _RecentValuation(
-      propertyType: 'Villa',
-      area: 'Sheikh Zayed',
-      estimatedValue: 'EGP 12.0M',
-      date: 'May 31',
-      icon: Icons.villa_outlined,
-    ),
-    _RecentValuation(
-      propertyType: 'Chalet',
-      area: 'North Coast',
-      estimatedValue: 'EGP 6.7M',
-      date: 'May 29',
-      icon: Icons.cottage_outlined,
-    ),
-  ];
+  HomeDashboard? _dashboard;
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  static const _recentCopilotSessions = [
-    _CopilotSession(title: 'Why is this villa worth EGP 12M?', date: 'Today'),
-    _CopilotSession(title: 'Show comparable properties.', date: 'Yesterday'),
-    _CopilotSession(title: 'Market outlook for New Cairo.', date: 'May 30'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    try {
+      final dashboard = await _repository.loadDashboard(
+        activeWorkspaceId: WorkspaceStateManager.instance.activeWorkspace?.id,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (dashboard.activeWorkspace != null) {
+        WorkspaceStateManager.instance.setActiveWorkspace(
+          dashboard.activeWorkspace!,
+        );
+      } else {
+        WorkspaceStateManager.instance.clearActiveWorkspace();
+      }
+      setState(() {
+        _dashboard = dashboard;
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } on Exception catch (exception) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _errorMessage = exception.toString();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final dashboard = _dashboard;
+    final portfolioItems = dashboard == null
+        ? const <_PortfolioItem>[]
+        : [
+            _PortfolioItem(
+              label: 'Properties Tracked',
+              value: '${dashboard.trackedProperties}',
+              icon: Icons.home_work_outlined,
+            ),
+            _PortfolioItem(
+              label: 'Copilot Sessions',
+              value: '${dashboard.copilotSessions}',
+              icon: Icons.auto_awesome_outlined,
+            ),
+          ];
+    final recentCopilotSessions =
+        dashboard?.recentCopilotSessions ?? const <HomeCopilotSession>[];
+
     return Scaffold(
       body: DecoratedBox(
         decoration: const BoxDecoration(
@@ -98,6 +113,7 @@ class HomeScreen extends StatelessWidget {
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         _HomeHero(
+                          displayName: dashboard?.displayName ?? 'ValorAI User',
                           onProfileTap: () {
                             context.goNamed(RouteNames.profile);
                           },
@@ -112,75 +128,68 @@ class HomeScreen extends StatelessWidget {
                           },
                         ),
                         const SizedBox(height: AppSpacing.lg),
-                        const _AIInsightCard(),
-                        const SizedBox(height: AppSpacing.xl),
-                        const _SectionTitle(title: 'Portfolio Overview'),
-                        const SizedBox(height: AppSpacing.md),
-                        SizedBox(
-                          height: 146,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: _portfolioItems.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(width: AppSpacing.md),
-                            itemBuilder: (context, index) {
-                              return _PortfolioCard(
-                                    item: _portfolioItems[index],
-                                  )
-                                  .animate(delay: (80 * index).ms)
-                                  .fadeIn(duration: 480.ms)
-                                  .slideX(begin: 0.12, end: 0);
-                            },
+                        if (_isLoading)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(AppSpacing.xl),
+                              child: CircularProgressIndicator(),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        const _SectionTitle(title: 'Market Signals'),
-                        const SizedBox(height: AppSpacing.md),
-                        _MarketSignalsCard(signals: _marketSignals),
-                        const SizedBox(height: AppSpacing.xl),
-                        const _SectionTitle(title: 'Recent Valuations'),
-                        const SizedBox(height: AppSpacing.md),
-                        ...List.generate(_recentValuations.length, (index) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              bottom: index == _recentValuations.length - 1
-                                  ? 0
-                                  : AppSpacing.sm,
-                            ),
-                            child:
-                                _RecentValuationCard(
-                                      valuation: _recentValuations[index],
+                        if (_errorMessage != null)
+                          _DashboardUnavailable(message: _errorMessage!),
+                        if (portfolioItems.isNotEmpty) ...[
+                          const _SectionTitle(title: 'Portfolio Overview'),
+                          const SizedBox(height: AppSpacing.md),
+                          SizedBox(
+                            height: 146,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: portfolioItems.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(width: AppSpacing.md),
+                              itemBuilder: (context, index) {
+                                return _PortfolioCard(
+                                      item: portfolioItems[index],
                                     )
-                                    .animate(delay: (70 * index).ms)
-                                    .fadeIn(duration: 460.ms)
-                                    .slideY(begin: 0.08, end: 0),
-                          );
-                        }),
-                        const SizedBox(height: AppSpacing.xl),
-                        const _SectionTitle(title: 'Recent Copilot Sessions'),
-                        const SizedBox(height: AppSpacing.md),
-                        ...List.generate(_recentCopilotSessions.length, (
-                          index,
-                        ) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              bottom: index == _recentCopilotSessions.length - 1
-                                  ? 0
-                                  : AppSpacing.sm,
+                                    .animate(delay: (80 * index).ms)
+                                    .fadeIn(duration: 480.ms)
+                                    .slideX(begin: 0.12, end: 0);
+                              },
                             ),
-                            child:
-                                _CopilotSessionCard(
-                                      session: _recentCopilotSessions[index],
-                                      onTap: () {
-                                        context.goNamed(RouteNames.copilot);
-                                      },
-                                    )
-                                    .animate(delay: (70 * index).ms)
-                                    .fadeIn(duration: 460.ms)
-                                    .slideY(begin: 0.08, end: 0),
-                          );
-                        }),
+                          ),
+                        ],
+                        if (recentCopilotSessions.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.xl),
+                          const _SectionTitle(title: 'Recent Copilot Sessions'),
+                          const SizedBox(height: AppSpacing.md),
+                          ...List.generate(recentCopilotSessions.length, (
+                            index,
+                          ) {
+                            final session = recentCopilotSessions[index];
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom:
+                                    index == recentCopilotSessions.length - 1
+                                    ? 0
+                                    : AppSpacing.sm,
+                              ),
+                              child:
+                                  _CopilotSessionCard(
+                                        session: _CopilotSession(
+                                          title: session.title,
+                                          date: _formatDate(session.updatedAt),
+                                        ),
+                                        onTap: () {
+                                          context.goNamed(RouteNames.copilot);
+                                        },
+                                      )
+                                      .animate(delay: (70 * index).ms)
+                                      .fadeIn(duration: 460.ms)
+                                      .slideY(begin: 0.08, end: 0),
+                            );
+                          }),
+                        ],
                       ]),
                     ),
                   ),
@@ -200,75 +209,87 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _HomeHero extends StatelessWidget {
-  const _HomeHero({required this.onProfileTap});
+  const _HomeHero({required this.displayName, required this.onProfileTap});
 
+  final String displayName;
   final VoidCallback onProfileTap;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: WorkspaceStateManager.instance,
-      builder: (context, _) {
-        final activeWorkspace = WorkspaceStateManager.instance.activeWorkspace;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Good Evening,',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.8,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Mohammed',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.accent.withValues(alpha: 0.84),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: () => context.goNamed(RouteNames.workspace),
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.workspaces_outline, size: 13, color: AppColors.accent),
-                          const SizedBox(width: 4),
-                          Text(
-                            activeWorkspace?.name ?? 'Select Workspace',
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
+          listenable: WorkspaceStateManager.instance,
+          builder: (context, _) {
+            final activeWorkspace =
+                WorkspaceStateManager.instance.activeWorkspace;
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Good Evening,',
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.8,
                             ),
-                          ),
-                          const SizedBox(width: 2),
-                          const Icon(Icons.keyboard_arrow_down_rounded, size: 13, color: AppColors.textMuted),
-                        ],
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        displayName,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.accent.withValues(alpha: 0.84),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      InkWell(
+                        onTap: () => context.goNamed(RouteNames.workspace),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.workspaces_outline,
+                                size: 13,
+                                color: AppColors.accent,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                activeWorkspace?.name ?? 'Select Workspace',
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 11,
+                                    ),
+                              ),
+                              const SizedBox(width: 2),
+                              const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 13,
+                                color: AppColors.textMuted,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            _ProfileAvatar(onTap: onProfileTap),
-          ],
-        );
-      }
-    )
-    .animate()
-    .fadeIn(duration: 520.ms)
-    .slideY(begin: -0.12, end: 0, curve: Curves.easeOutCubic);
+                ),
+                _ProfileAvatar(onTap: onProfileTap),
+              ],
+            );
+          },
+        )
+        .animate()
+        .fadeIn(duration: 520.ms)
+        .slideY(begin: -0.12, end: 0, curve: Curves.easeOutCubic);
   }
 }
 
@@ -436,90 +457,6 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-class _AIInsightCard extends StatelessWidget {
-  const _AIInsightCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.surface.withValues(alpha: 0.9),
-            AppColors.backgroundSecondary.withValues(alpha: 0.86),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.28)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accent.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.auto_awesome_rounded,
-                color: AppColors.accent,
-                size: 20,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                'AI INSIGHT',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.accent.withValues(alpha: 0.82),
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text.rich(
-            TextSpan(
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-                height: 1.5,
-              ),
-              children: const [
-                TextSpan(text: 'Properties in '),
-                TextSpan(
-                  text: 'New Cairo',
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                TextSpan(text: ' increased '),
-                TextSpan(
-                  text: '3.2%',
-                  style: TextStyle(
-                    color: AppColors.secondaryAccent,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                TextSpan(
-                  text:
-                      ' over the last 30 days. Consider reviewing your saved valuations.',
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ).animate(delay: 220.ms).fadeIn(duration: 520.ms).slideY(begin: 0.1, end: 0);
-  }
-}
-
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.title});
 
@@ -532,6 +469,26 @@ class _SectionTitle extends StatelessWidget {
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
         color: AppColors.textPrimary,
         fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+}
+
+class _DashboardUnavailable extends StatelessWidget {
+  const _DashboardUnavailable({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: _cardDecoration(),
+      child: Text(
+        message,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
       ),
     );
   }
@@ -582,160 +539,6 @@ class _PortfolioCard extends StatelessWidget {
                   height: 1.25,
                   fontSize: 11,
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MarketSignalsCard extends StatelessWidget {
-  const _MarketSignalsCard({required this.signals});
-
-  final List<_MarketSignal> signals;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: _cardDecoration(),
-      child: Column(
-        children: List.generate(signals.length, (index) {
-          final signal = signals[index];
-          return Column(
-            children: [
-              Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 9,
-                          height: 9,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.secondaryAccent,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.secondaryAccent.withValues(
-                                  alpha: 0.54,
-                                ),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Text(
-                            signal.name,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: AppSpacing.xs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.secondaryAccent.withValues(
-                              alpha: 0.1,
-                            ),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.arrow_upward_rounded,
-                                size: 13,
-                                color: AppColors.secondaryAccent,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                signal.status,
-                                style: Theme.of(context).textTheme.labelMedium
-                                    ?.copyWith(
-                                      color: AppColors.secondaryAccent,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                  .animate(delay: (70 * index).ms)
-                  .fadeIn(duration: 440.ms)
-                  .slideX(begin: 0.08, end: 0),
-              if (index != signals.length - 1)
-                Divider(
-                  height: 1,
-                  color: AppColors.textPrimary.withValues(alpha: 0.06),
-                ),
-            ],
-          );
-        }),
-      ),
-    );
-  }
-}
-
-class _RecentValuationCard extends StatelessWidget {
-  const _RecentValuationCard({required this.valuation});
-
-  final _RecentValuation valuation;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: _cardDecoration(),
-      child: Row(
-        children: [
-          _ListIcon(icon: valuation.icon),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  valuation.propertyType,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  valuation.area,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelMedium?.copyWith(color: AppColors.textMuted),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                valuation.estimatedValue,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.accent,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                valuation.date,
-                style: Theme.of(
-                  context,
-                ).textTheme.labelMedium?.copyWith(color: AppColors.textMuted),
               ),
             ],
           ),
@@ -991,29 +794,6 @@ class _PortfolioItem {
   final IconData icon;
 }
 
-class _MarketSignal {
-  const _MarketSignal({required this.name, required this.status});
-
-  final String name;
-  final String status;
-}
-
-class _RecentValuation {
-  const _RecentValuation({
-    required this.propertyType,
-    required this.area,
-    required this.estimatedValue,
-    required this.date,
-    required this.icon,
-  });
-
-  final String propertyType;
-  final String area;
-  final String estimatedValue;
-  final String date;
-  final IconData icon;
-}
-
 class _CopilotSession {
   const _CopilotSession({required this.title, required this.date});
 
@@ -1026,4 +806,9 @@ class _BottomNavigationItem {
 
   final String label;
   final IconData icon;
+}
+
+String _formatDate(DateTime date) {
+  final local = date.toLocal();
+  return '${local.day}/${local.month}/${local.year}';
 }

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -38,6 +40,7 @@ from app.copilot.orchestrator.planner import (
 
 
 RUNTIME_ID = "COPILOT_ORCHESTRATOR_LLM_V1"
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -117,14 +120,74 @@ class CopilotOrchestratorRuntimeV1:
         scenario_id: int | None = None,
         broker_session_id: str | None = None,
     ) -> CopilotOrchestratorRuntimeResult:
+        started = time.perf_counter()
+        logger.info(
+            "copilot_runtime_started",
+            extra={
+                "runtime_id": RUNTIME_ID,
+                "user_id": user_id,
+                "workspace_id": workspace_id,
+                "scenario_id": scenario_id,
+                "broker_session_id": broker_session_id,
+                "message_length": len(user_message),
+                "tool_input_keys": sorted(str(key) for key in tool_inputs.keys()),
+            },
+        )
         intent_result = self.intents.classify(user_message)
+        logger.info(
+            "copilot_runtime_intent_classified",
+            extra={
+                "runtime_id": RUNTIME_ID,
+                "user_id": user_id,
+                "workspace_id": workspace_id,
+                "intent": intent_result.intent.value,
+                "confidence": intent_result.confidence.value,
+            },
+        )
         execution_plan = self.planner.plan(intent_result)
+        logger.info(
+            "copilot_runtime_plan_created",
+            extra={
+                "runtime_id": RUNTIME_ID,
+                "user_id": user_id,
+                "workspace_id": workspace_id,
+                "plan_id": execution_plan.plan_id,
+                "tools": [tool.value for tool in execution_plan.tools],
+                "strategy": execution_plan.execution_strategy.value,
+            },
+        )
         execution_result = self.executor.execute(
             execution_plan,
             user_id=user_id,
             tool_inputs=tool_inputs,
         )
+        logger.info(
+            "copilot_runtime_tools_executed",
+            extra={
+                "runtime_id": RUNTIME_ID,
+                "user_id": user_id,
+                "workspace_id": workspace_id,
+                "execution_id": execution_result.execution_id,
+                "status": execution_result.status.value,
+                "successful_tools": [
+                    result.planned_tool.value for result in execution_result.tool_results
+                ],
+                "failed_tools": [
+                    failure.planned_tool.value for failure in execution_result.failed_tools
+                ],
+            },
+        )
         composed_response = self.composer.compose(execution_result)
+        logger.info(
+            "copilot_runtime_response_composed",
+            extra={
+                "runtime_id": RUNTIME_ID,
+                "user_id": user_id,
+                "workspace_id": workspace_id,
+                "response_id": composed_response.response_id,
+                "composition_status": composed_response.status.value,
+            },
+        )
         memory_context = self.memory.remember(
             user_id=user_id,
             workspace_id=workspace_id,
@@ -132,6 +195,16 @@ class CopilotOrchestratorRuntimeV1:
             broker_session_id=broker_session_id,
             execution_result=execution_result,
             composed_response=composed_response,
+        )
+        logger.info(
+            "copilot_runtime_memory_recorded",
+            extra={
+                "runtime_id": RUNTIME_ID,
+                "user_id": user_id,
+                "workspace_id": workspace_id,
+                "memory_id": memory_context.memory_id,
+                "memory_status": memory_context.status.value,
+            },
         )
         narration_result = self.narrator.narrate(
             scope=NarrationScope(
@@ -143,6 +216,17 @@ class CopilotOrchestratorRuntimeV1:
             user_message=user_message,
             composed_response=composed_response,
             memory_context=memory_context,
+        )
+        logger.info(
+            "copilot_runtime_narration_completed",
+            extra={
+                "runtime_id": RUNTIME_ID,
+                "user_id": user_id,
+                "workspace_id": workspace_id,
+                "response_id": narration_result.response_id,
+                "narration_status": narration_result.status.value,
+                "elapsed_ms": round((time.perf_counter() - started) * 1000, 2),
+            },
         )
         return CopilotOrchestratorRuntimeResult(
             intent_result=intent_result,

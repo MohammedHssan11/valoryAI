@@ -1,0 +1,123 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: blur_on
+      - generic [ref=e7]: VALORAI
+    - generic [ref=e8]:
+      - button "Notifications" [ref=e9]:
+        - generic [ref=e10]: notifications
+      - generic [ref=e13] [cursor=pointer]: IN
+  - complementary [ref=e14]:
+    - generic [ref=e15]:
+      - button "analytics Nexus" [ref=e16]:
+        - generic [ref=e17]: analytics
+        - generic [ref=e18]: Nexus
+      - button "explore Broker" [ref=e19]:
+        - generic [ref=e20]: explore
+        - generic [ref=e21]: Broker
+      - button "map Pulse" [ref=e22]:
+        - generic [ref=e23]: map
+        - generic [ref=e24]: Pulse
+      - button "real_estate_agent Assets" [ref=e25]:
+        - generic [ref=e26]: real_estate_agent
+        - generic [ref=e27]: Assets
+      - button "account_balance_wallet Vault" [ref=e28]:
+        - generic [ref=e29]: account_balance_wallet
+        - generic [ref=e30]: Vault
+  - main [ref=e31]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - paragraph [ref=e35]: Governed Valuation Engine
+        - heading "Evidence-backed property intelligence" [level=1] [ref=e36]
+        - paragraph [ref=e37]: Submit a real property profile to the FastAPI valuation engine. Results are derived from deterministic comparable retrieval, category contracts, confidence scoring, and explainability traces.
+      - generic [ref=e38]:
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - generic [ref=e42]:
+              - paragraph [ref=e43]: Request
+              - heading "Category valuation profile" [level=2] [ref=e44]
+            - img [ref=e45]
+          - generic [ref=e47]:
+            - generic [ref=e48]: Property Category
+            - generic [ref=e49]:
+              - button "Residential Rent" [ref=e50]
+              - button "Residential Sale" [ref=e51]
+              - button "Villas" [ref=e52]
+              - button "Offices" [ref=e53]
+              - button "Retail" [ref=e54]
+              - button "Commercial" [ref=e55]
+              - button "Land" [ref=e56]
+          - generic [ref=e57]:
+            - generic [ref=e58]:
+              - generic [ref=e59]: Location (Address or District)
+              - button "Advanced (Lat/Lng)" [ref=e60]
+            - textbox "e.g. Madinaty, Cairo" [ref=e61]
+          - generic [ref=e62]:
+            - generic [ref=e63]: Property Type
+            - combobox "Property Type" [ref=e64]:
+              - option "Apartment" [selected]
+              - option "Villa"
+              - option "Townhouse"
+              - option "Twin House"
+              - option "Duplex"
+              - option "Penthouse"
+              - option "Chalet"
+              - option "iVilla"
+              - option "Hotel Apartment"
+          - generic [ref=e65]:
+            - generic [ref=e66]:
+              - generic [ref=e67]: Bedrooms
+              - spinbutton "Bedrooms" [ref=e68]: "3"
+            - generic [ref=e69]:
+              - generic [ref=e70]: Bathrooms
+              - spinbutton "Bathrooms" [ref=e71]: "2"
+            - generic [ref=e72]:
+              - generic [ref=e73]: Size sqm
+              - spinbutton "Size sqm" [ref=e74]: "150"
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - generic [ref=e77]: Floor Level
+              - spinbutton "Floor Level" [ref=e78]
+            - generic [ref=e79]:
+              - generic [ref=e80]: Finishing / Quality
+              - combobox "Finishing / Quality" [ref=e81]:
+                - option "Unspecified" [selected]
+                - option "Standard"
+                - option "Premium"
+                - option "Luxury"
+                - option "Renovated"
+                - option "New"
+          - generic [ref=e82]:
+            - generic [ref=e83]:
+              - img [ref=e84]
+              - text: Governed Amenities
+            - generic [ref=e88]:
+              - button "Furnished" [ref=e89]
+              - button "Parking" [ref=e90]
+              - button "Pool" [ref=e91]
+              - button "Elevator" [ref=e92]
+              - button "Security" [ref=e93]
+              - button "Smart Home" [ref=e94]
+              - button "Compound" [ref=e95]
+              - button "Gym" [ref=e96]
+              - button "Maid Room" [ref=e97]
+              - button "Central AC" [ref=e98]
+              - button "Internet" [ref=e99]
+          - generic [ref=e100]:
+            - generic [ref=e101]: Target Price EGP
+            - spinbutton "Target Price EGP" [ref=e102]: "30000"
+          - generic [ref=e103]:
+            - button "Estimate" [ref=e104]:
+              - img [ref=e105]
+              - text: Estimate
+            - button "Reset" [ref=e107]:
+              - img [ref=e108]
+              - text: Reset
+          - generic [ref=e111]:
+            - paragraph [ref=e112]: Contract
+            - paragraph [ref=e113]: POST /v1/valuation/fair-price
+        - generic [ref=e116]:
+          - img [ref=e117]
+          - generic [ref=e120]:
+            - paragraph [ref=e121]: Live Valuation Awaiting Input
+            - heading "Run the fair-price engine to reveal evidence-backed property intelligence." [level=2] [ref=e122]

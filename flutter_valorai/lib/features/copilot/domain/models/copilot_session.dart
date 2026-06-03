@@ -121,10 +121,14 @@ class CopilotMessage {
       isLoading: map['isLoading'] as bool? ?? false,
       error: map['error'] as String?,
       propertySummary: map['propertySummary'] != null
-          ? PropertySummaryCardData.fromMap(map['propertySummary'] as Map<String, dynamic>)
+          ? PropertySummaryCardData.fromMap(
+              map['propertySummary'] as Map<String, dynamic>,
+            )
           : null,
       confidence: map['confidence'] != null
-          ? ConfidenceCardData.fromMap(map['confidence'] as Map<String, dynamic>)
+          ? ConfidenceCardData.fromMap(
+              map['confidence'] as Map<String, dynamic>,
+            )
           : null,
       evidenceDrivers: map['evidenceDrivers'] != null
           ? List<EvidenceCardData>.from(
@@ -135,13 +139,18 @@ class CopilotMessage {
           : null,
       comparables: map['comparables'] != null
           ? List<ComparableReferenceData>.from(
-              (map['comparables'] as List<dynamic>).map<ComparableReferenceData>(
-                (x) => ComparableReferenceData.fromMap(x as Map<String, dynamic>),
-              ),
+              (map['comparables'] as List<dynamic>)
+                  .map<ComparableReferenceData>(
+                    (x) => ComparableReferenceData.fromMap(
+                      x as Map<String, dynamic>,
+                    ),
+                  ),
             )
           : null,
       marketInsight: map['marketInsight'] != null
-          ? MarketInsightCardData.fromMap(map['marketInsight'] as Map<String, dynamic>)
+          ? MarketInsightCardData.fromMap(
+              map['marketInsight'] as Map<String, dynamic>,
+            )
           : null,
     );
   }
@@ -243,11 +252,7 @@ class EvidenceCardData {
   });
 
   Map<String, dynamic> toMap() {
-    return {
-      'label': label,
-      'value': value,
-      'direction': direction,
-    };
+    return {'label': label, 'value': value, 'direction': direction};
   }
 
   factory EvidenceCardData.fromMap(Map<String, dynamic> map) {
@@ -262,18 +267,18 @@ class EvidenceCardData {
 class ComparableReferenceData {
   final String comparableId;
   final int price;
-  final double sizeSqm;
-  final double distanceKm;
-  final double similarityScore;
+  final double? sizeSqm;
+  final double? distanceKm;
+  final double? similarityScore;
   final String? propertyType;
   final String? compoundName;
 
   const ComparableReferenceData({
     required this.comparableId,
     required this.price,
-    required this.sizeSqm,
-    required this.distanceKm,
-    required this.similarityScore,
+    this.sizeSqm,
+    this.distanceKm,
+    this.similarityScore,
     this.propertyType,
     this.compoundName,
   });
@@ -294,9 +299,9 @@ class ComparableReferenceData {
     return ComparableReferenceData(
       comparableId: map['comparableId'] as String,
       price: map['price'] as int,
-      sizeSqm: (map['sizeSqm'] as num).toDouble(),
-      distanceKm: (map['distanceKm'] as num).toDouble(),
-      similarityScore: (map['similarityScore'] as num).toDouble(),
+      sizeSqm: (map['sizeSqm'] as num?)?.toDouble(),
+      distanceKm: (map['distanceKm'] as num?)?.toDouble(),
+      similarityScore: (map['similarityScore'] as num?)?.toDouble(),
       propertyType: map['propertyType'] as String?,
       compoundName: map['compoundName'] as String?,
     );
@@ -304,15 +309,15 @@ class ComparableReferenceData {
 }
 
 class MarketInsightCardData {
-  final String demandTrend;
-  final String marketStrength;
+  final String? demandTrend;
+  final String? marketStrength;
   final List<String> activeCompounds;
   final List<String> activeAreas;
   final List<String> statements;
 
   const MarketInsightCardData({
-    required this.demandTrend,
-    required this.marketStrength,
+    this.demandTrend,
+    this.marketStrength,
     required this.activeCompounds,
     required this.activeAreas,
     required this.statements,
@@ -330,9 +335,11 @@ class MarketInsightCardData {
 
   factory MarketInsightCardData.fromMap(Map<String, dynamic> map) {
     return MarketInsightCardData(
-      demandTrend: map['demandTrend'] as String,
-      marketStrength: map['marketStrength'] as String,
-      activeCompounds: List<String>.from(map['activeCompounds'] as List<dynamic>),
+      demandTrend: map['demandTrend'] as String?,
+      marketStrength: map['marketStrength'] as String?,
+      activeCompounds: List<String>.from(
+        map['activeCompounds'] as List<dynamic>,
+      ),
       activeAreas: List<String>.from(map['activeAreas'] as List<dynamic>),
       statements: List<String>.from(map['statements'] as List<dynamic>),
     );

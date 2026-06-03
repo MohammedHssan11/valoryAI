@@ -1,23 +1,12 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../domain/models/valuation_request.dart';
 import '../../domain/models/valuation_response.dart';
 
 class ValuationRemoteDataSource {
   ValuationRemoteDataSource({Dio? dio})
-    : _dio =
-          dio ??
-          Dio(
-            BaseOptions(
-              baseUrl: const String.fromEnvironment(
-                'VALORAI_API_BASE_URL',
-                defaultValue: 'http://localhost:8000',
-              ),
-              connectTimeout: const Duration(seconds: 12),
-              receiveTimeout: const Duration(seconds: 30),
-              headers: const {'Content-Type': 'application/json'},
-            ),
-          );
+    : _dio = dio ?? ApiClient.instance.authenticatedDio;
 
   final Dio _dio;
 

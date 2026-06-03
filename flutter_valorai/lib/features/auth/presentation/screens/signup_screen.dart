@@ -103,7 +103,9 @@ class _SignupScreenState extends State<SignupScreen> {
       }
       _showSnackBar(successMessage, isError: false);
       context.goNamed(RouteNames.login);
-    } on Exception catch (exception) {
+    } on Exception catch (exception, stackTrace) {
+      debugPrint("ERROR: $exception");
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) {
         return;
       }

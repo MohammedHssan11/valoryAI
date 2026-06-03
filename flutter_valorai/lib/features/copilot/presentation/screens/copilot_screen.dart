@@ -7,128 +7,30 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../valuation/domain/models/valuation_response.dart';
+import '../../../workspace/data/datasources/workspace_remote_data_source.dart';
+import '../../../workspace/data/repositories/workspace_repository_impl.dart';
+import '../../../workspace/domain/repositories/workspace_repository.dart';
 import '../../data/datasources/copilot_remote_data_source.dart';
 import '../../data/repositories/copilot_repository_impl.dart';
 import '../../domain/models/copilot_session.dart';
 import '../../domain/repositories/copilot_repository.dart';
 import '../../../workspace/presentation/state/workspace_state_manager.dart';
 
-// Singleton/Static Session Store to persist state during the app session
+// Keeps user-created chat state alive while the app process remains active.
 class CopilotSessionStore {
   CopilotSessionStore._();
 
-  static final List<CopilotSession> sessions = _generateInitialSessions();
+  static final List<CopilotSession> sessions = [];
   static CopilotSession? activeSession;
+}
 
-  static List<CopilotSession> _generateInitialSessions() {
-    final now = DateTime.now();
-    return [
-      CopilotSession(
-        id: 'session_mivida',
-        title: 'Mivida Valuation Review',
-        isPinned: true,
-        createdAt: now.subtract(const Duration(hours: 4)),
-        workspaceId: 1,
-        messages: [
-          CopilotMessage(
-            id: 'msg_u1',
-            role: 'user',
-            content: 'Why is confidence only 82%?',
-            timestamp: now.subtract(const Duration(hours: 4)),
-          ),
-          CopilotMessage(
-            id: 'msg_a1',
-            role: 'assistant',
-            content: '### Model Confidence Analysis\nThe valuation model yielded an 82% confidence score due to local pricing dispersion among recent comps in Sheikh Zayed. The location resolution is strong, but aged listings in the cluster introduce a minor discount.',
-            timestamp: now.subtract(const Duration(hours: 4, minutes: 59)),
-            confidence: const ConfidenceCardData(
-              valuationId: 'val_mivida',
-              score: 0.82,
-              label: 'High Confidence',
-              factors: {
-                'Location Resolution': 0.92,
-                'Transaction Density': 0.84,
-                'Submarket Consistency': 0.70,
-              },
-            ),
-          ),
-        ],
-      ),
-      CopilotSession(
-        id: 'session_new_cairo',
-        title: 'New Cairo Market Analysis',
-        isPinned: false,
-        createdAt: now.subtract(const Duration(days: 1)),
-        workspaceId: 1,
-        messages: [
-          CopilotMessage(
-            id: 'msg_u2',
-            role: 'user',
-            content: 'Market outlook for New Cairo.',
-            timestamp: now.subtract(const Duration(days: 1)),
-          ),
-          CopilotMessage(
-            id: 'msg_a2',
-            role: 'assistant',
-            content: '### Regional Market Outlook\nNew Cairo exhibits premium pricing indicators and low inventory aging. Demand is highly concentrated around major compounds.',
-            timestamp: now.subtract(const Duration(days: 1, minutes: 1)),
-            marketInsight: const MarketInsightCardData(
-              demandTrend: 'High',
-              marketStrength: 'Active',
-              activeCompounds: ['Mivida', 'Eastown', 'Palm Hills'],
-              activeAreas: ['Golden Square', 'Fifth Settlement'],
-              statements: [
-                'Master-planned compounds command a 12% pricing premium.',
-                'Average premium rental yields stabilized at 6.8%.',
-                'Listing velocity increased by 14% quarter-over-quarter.',
-              ],
-            ),
-          ),
-        ],
-      ),
-      CopilotSession(
-        id: 'session_comps',
-        title: 'Sheikh Zayed Apartment Comps',
-        isPinned: false,
-        createdAt: now.subtract(const Duration(days: 3)),
-        workspaceId: 1,
-        messages: [
-          CopilotMessage(
-            id: 'msg_u3',
-            role: 'user',
-            content: 'Show comparable properties.',
-            timestamp: now.subtract(const Duration(days: 3)),
-          ),
-          CopilotMessage(
-            id: 'msg_a3',
-            role: 'assistant',
-            content: '### Comparable Evidence Retrieval\nI have isolated the top 3 high-similarity comparable transaction controls. These represent the primary reference points used by our valuation algorithms.',
-            timestamp: now.subtract(const Duration(days: 3, minutes: 1)),
-            comparables: const [
-              ComparableReferenceData(
-                comparableId: 'COMP-729A',
-                price: 8200000,
-                sizeSqm: 175,
-                distanceKm: 0.4,
-                similarityScore: 0.94,
-                propertyType: 'Apartment',
-                compoundName: 'Mivida',
-              ),
-              ComparableReferenceData(
-                comparableId: 'COMP-110C',
-                price: 8600000,
-                sizeSqm: 190,
-                distanceKm: 0.9,
-                similarityScore: 0.88,
-                propertyType: 'Apartment',
-                compoundName: 'Eastown',
-              ),
-            ],
-          ),
-        ],
-      ),
-    ];
-  }
+class CopilotUiException implements Exception {
+  const CopilotUiException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
 
 class CopilotScreen extends StatefulWidget {
@@ -143,14 +45,22 @@ class CopilotScreen extends StatefulWidget {
 class _CopilotScreenState extends State<CopilotScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final CopilotRepository _repository = CopilotRepositoryImpl(CopilotRemoteDataSource());
+  final CopilotRepository _repository = CopilotRepositoryImpl(
+    CopilotRemoteDataSource(),
+  );
+  final WorkspaceRepository _workspaceRepository = WorkspaceRepositoryImpl(
+    WorkspaceRemoteDataSource(),
+  );
 
   late List<CopilotSession> _sessions;
   CopilotSession? _currentSession;
   ValuationResponse? _activeValuationContext;
 
   bool _isLoading = false;
+  bool _isBootstrappingWorkspace = false;
   String? _searchQuery;
+  String? _copilotStatusMessage;
+  String? _lastFailedMessageText;
 
   @override
   void initState() {
@@ -167,6 +77,7 @@ class _CopilotScreenState extends State<CopilotScreen> {
     } else {
       _createNewSession(isInitial: true);
     }
+    _bootstrapWorkspace();
   }
 
   @override
@@ -195,7 +106,7 @@ class _CopilotScreenState extends State<CopilotScreen> {
       title: 'New Chat Session',
       messages: const [],
       createdAt: now,
-      workspaceId: 1,
+      workspaceId: WorkspaceStateManager.instance.activeWorkspace?.id ?? 0,
     );
 
     setState(() {
@@ -207,6 +118,84 @@ class _CopilotScreenState extends State<CopilotScreen> {
     if (!isInitial) {
       _scrollToBottom();
     }
+  }
+
+  Future<void> _bootstrapWorkspace() async {
+    if (WorkspaceStateManager.instance.activeWorkspace != null ||
+        _isBootstrappingWorkspace) {
+      return;
+    }
+    setState(() {
+      _isBootstrappingWorkspace = true;
+      _copilotStatusMessage = null;
+    });
+    debugPrint('[CopilotScreen] bootstrap_workspace started');
+    try {
+      final workspaces = await _workspaceRepository.getWorkspaces();
+      if (!mounted) {
+        return;
+      }
+      if (workspaces.isEmpty) {
+        setState(() {
+          _isBootstrappingWorkspace = false;
+          _copilotStatusMessage =
+              'Create a workspace before sending Copilot messages.';
+        });
+        debugPrint('[CopilotScreen] bootstrap_workspace no_workspaces');
+        return;
+      }
+      final workspace = workspaces.first;
+      WorkspaceStateManager.instance.setActiveWorkspace(workspace);
+      setState(() {
+        _isBootstrappingWorkspace = false;
+        _copilotStatusMessage = null;
+        if (_currentSession != null) {
+          _syncCurrentSessionWorkspace(workspace.id);
+        }
+      });
+      debugPrint(
+        '[CopilotScreen] bootstrap_workspace selected=${workspace.id}',
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isBootstrappingWorkspace = false;
+        _copilotStatusMessage =
+            'Unable to load a workspace for Copilot. Check your connection and retry.';
+      });
+      debugPrint('[CopilotScreen] bootstrap_workspace failed=$error');
+    }
+  }
+
+  Future<int> _resolveActiveWorkspaceId() async {
+    final activeWorkspace = WorkspaceStateManager.instance.activeWorkspace;
+    if (activeWorkspace != null) {
+      return activeWorkspace.id;
+    }
+    await _bootstrapWorkspace();
+    final resolvedWorkspace = WorkspaceStateManager.instance.activeWorkspace;
+    if (resolvedWorkspace == null) {
+      throw const CopilotUiException(
+        'Create or select a workspace before sending a Copilot message.',
+      );
+    }
+    return resolvedWorkspace.id;
+  }
+
+  void _syncCurrentSessionWorkspace(int workspaceId) {
+    final current = _currentSession;
+    if (current == null || current.workspaceId == workspaceId) {
+      return;
+    }
+    final index = _sessions.indexWhere((s) => s.id == current.id);
+    if (index == -1) {
+      return;
+    }
+    _sessions[index] = current.copyWith(workspaceId: workspaceId);
+    _currentSession = _sessions[index];
+    CopilotSessionStore.activeSession = _currentSession;
   }
 
   void _renameSession(CopilotSession session, String newTitle) {
@@ -240,7 +229,9 @@ class _CopilotScreenState extends State<CopilotScreen> {
     setState(() {
       final index = _sessions.indexWhere((s) => s.id == session.id);
       if (index != -1) {
-        _sessions[index] = _sessions[index].copyWith(isPinned: !_sessions[index].isPinned);
+        _sessions[index] = _sessions[index].copyWith(
+          isPinned: !_sessions[index].isPinned,
+        );
         if (_currentSession?.id == session.id) {
           _currentSession = _sessions[index];
           CopilotSessionStore.activeSession = _currentSession;
@@ -271,13 +262,15 @@ class _CopilotScreenState extends State<CopilotScreen> {
     );
 
     setState(() {
-      final updatedMessages = List<CopilotMessage>.from(_currentSession!.messages)
-        ..add(userMessage)
-        ..add(loadingMessage);
+      final updatedMessages =
+          List<CopilotMessage>.from(_currentSession!.messages)
+            ..add(userMessage)
+            ..add(loadingMessage);
 
       // Automatically rename session from the first message if it is default
       String newTitle = _currentSession!.title;
-      if (_currentSession!.title == 'New Chat Session' && _currentSession!.messages.isEmpty) {
+      if (_currentSession!.title == 'New Chat Session' &&
+          _currentSession!.messages.isEmpty) {
         newTitle = userMessageText.length > 25
             ? '${userMessageText.substring(0, 25)}...'
             : userMessageText;
@@ -297,16 +290,14 @@ class _CopilotScreenState extends State<CopilotScreen> {
 
     _scrollToBottom();
 
-    // Map Valuation Response context to tool_inputs if available
-    Map<String, dynamic>? toolInputs;
-    if (_activeValuationContext != null) {
-      toolInputs = {
-        'valuation': _activeValuationContext!.rawData,
-      };
-    }
-
     try {
-      final activeWorkspaceId = WorkspaceStateManager.instance.activeWorkspace?.id ?? _currentSession!.workspaceId;
+      final activeWorkspaceId = await _resolveActiveWorkspaceId();
+      _syncCurrentSessionWorkspace(activeWorkspaceId);
+      final toolInputs = _buildToolInputs(activeWorkspaceId);
+      debugPrint(
+        '[CopilotScreen] send_message workspace=$activeWorkspaceId '
+        'toolKeys=${(toolInputs ?? {}).keys.toList()}',
+      );
       final response = await _repository.respond(
         message: userMessageText,
         workspaceId: activeWorkspaceId,
@@ -314,17 +305,22 @@ class _CopilotScreenState extends State<CopilotScreen> {
       );
 
       setState(() {
-        final messagesWithoutLoading = List<CopilotMessage>.from(_currentSession!.messages)
-          ..removeLast() // Remove loading message
-          ..add(response);
+        final messagesWithoutLoading =
+            List<CopilotMessage>.from(_currentSession!.messages)
+              ..removeLast() // Remove loading message
+              ..add(response);
 
         final index = _sessions.indexWhere((s) => s.id == _currentSession!.id);
         if (index != -1) {
-          _sessions[index] = _sessions[index].copyWith(messages: messagesWithoutLoading);
+          _sessions[index] = _sessions[index].copyWith(
+            messages: messagesWithoutLoading,
+          );
           _currentSession = _sessions[index];
           CopilotSessionStore.activeSession = _currentSession;
         }
         _isLoading = false;
+        _lastFailedMessageText = null;
+        _copilotStatusMessage = null;
       });
     } catch (e) {
       setState(() {
@@ -332,26 +328,161 @@ class _CopilotScreenState extends State<CopilotScreen> {
         final errorResponse = CopilotMessage(
           id: 'msg_err_${DateTime.now().millisecondsSinceEpoch}',
           role: 'assistant',
-          content: 'I encountered an error connecting to the orchestrator. Please retry.',
+          content: _friendlyCopilotError(e),
           timestamp: DateTime.now(),
           error: errorMsg,
         );
 
-        final messagesWithoutLoading = List<CopilotMessage>.from(_currentSession!.messages)
-          ..removeLast()
-          ..add(errorResponse);
+        final messagesWithoutLoading =
+            List<CopilotMessage>.from(_currentSession!.messages)
+              ..removeLast()
+              ..add(errorResponse);
 
         final index = _sessions.indexWhere((s) => s.id == _currentSession!.id);
         if (index != -1) {
-          _sessions[index] = _sessions[index].copyWith(messages: messagesWithoutLoading);
+          _sessions[index] = _sessions[index].copyWith(
+            messages: messagesWithoutLoading,
+          );
           _currentSession = _sessions[index];
           CopilotSessionStore.activeSession = _currentSession;
         }
         _isLoading = false;
+        _lastFailedMessageText = userMessageText;
       });
+      debugPrint('[CopilotScreen] send_message failed=$e');
     }
 
     _scrollToBottom();
+  }
+
+  Map<String, dynamic>? _buildToolInputs(int workspaceId) {
+    final context = _activeValuationContext;
+    if (context == null) {
+      return null;
+    }
+
+    final raw = context.rawData;
+    final inputs = <String, dynamic>{};
+    final propertyId = _intFromRaw(raw, const [
+      'property_id',
+      'property_state_id',
+    ]);
+    final scenarioId = _intFromRaw(raw, const ['scenario_id']);
+    final valuationId = _stringFromRaw(raw, const [
+      'valuation_id',
+      'request_id',
+    ]);
+
+    if (propertyId != null) {
+      final propertyPayload = <String, dynamic>{
+        'workspace_id': workspaceId,
+        'property_id': propertyId,
+      };
+      if (scenarioId != null) {
+        propertyPayload['scenario_id'] = scenarioId;
+      }
+      inputs['VALUATION_TOOL'] = propertyPayload;
+      final comparablesPayload = <String, dynamic>{...propertyPayload};
+      if (valuationId != null) {
+        comparablesPayload['valuation_id'] = valuationId;
+      }
+      inputs['COMPARABLES_TOOL'] = comparablesPayload;
+    } else {
+      debugPrint(
+        '[CopilotScreen] active valuation omitted from property tools: '
+        'missing persisted property_id',
+      );
+    }
+
+    if (valuationId != null) {
+      inputs['EXPLAINABILITY_TOOL'] = {
+        'workspace_id': workspaceId,
+        'valuation_id': valuationId,
+      };
+    }
+
+    final marketInsightInput = _marketInsightInput(workspaceId, raw);
+    if (marketInsightInput != null) {
+      inputs['MARKET_INSIGHT_TOOL'] = marketInsightInput;
+    }
+
+    return inputs.isEmpty ? null : inputs;
+  }
+
+  Map<String, dynamic>? _marketInsightInput(
+    int workspaceId,
+    Map<String, dynamic> raw,
+  ) {
+    final payload = <String, dynamic>{'workspace_id': workspaceId};
+    final propertyType = _stringFromRaw(raw, const ['property_type']);
+    final compoundName = _stringFromRaw(raw, const ['compound_name']);
+    final area = raw['area'];
+    final h3 =
+        raw['h3_res9'] ??
+        (area is Map<String, dynamic> ? area['h3_res9'] : null);
+
+    if (propertyType != null) {
+      payload['property_type'] = propertyType;
+    }
+    if (compoundName != null) {
+      payload['compound_name'] = compoundName;
+    }
+    if (h3 is String && h3.isNotEmpty) {
+      payload['h3_res9'] = h3;
+    }
+    return payload.length == 1 ? null : payload;
+  }
+
+  int? _intFromRaw(Map<String, dynamic> raw, List<String> keys) {
+    for (final key in keys) {
+      final value = raw[key];
+      if (value is int) {
+        return value;
+      }
+      if (value is num) {
+        return value.toInt();
+      }
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+    }
+    return null;
+  }
+
+  String? _stringFromRaw(Map<String, dynamic> raw, List<String> keys) {
+    for (final key in keys) {
+      final value = raw[key];
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+    }
+    return null;
+  }
+
+  String _friendlyCopilotError(Object error) {
+    if (error is CopilotUiException) {
+      return error.message;
+    }
+    if (error is CopilotException) {
+      final suffix = error.requestId == null ? '' : ' (${error.requestId})';
+      return '${error.message}$suffix';
+    }
+    final message = error.toString();
+    if (message.contains('workspace')) {
+      return 'Create or select a workspace before sending a Copilot message.';
+    }
+    return 'Copilot could not complete this request. Please retry.';
+  }
+
+  void _retryLastFailedMessage() {
+    final message = _lastFailedMessageText;
+    if (message == null || message.trim().isEmpty || _isLoading) {
+      return;
+    }
+    _sendMessage(message);
   }
 
   void _showRenameDialog(CopilotSession session) {
@@ -364,9 +495,9 @@ class _CopilotScreenState extends State<CopilotScreen> {
           title: Text(
             'Rename Session',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: TextField(
             controller: controller,
@@ -376,7 +507,9 @@ class _CopilotScreenState extends State<CopilotScreen> {
               hintText: 'Enter session name',
               hintStyle: const TextStyle(color: AppColors.textMuted),
               enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.3)),
+                borderSide: BorderSide(
+                  color: AppColors.textMuted.withValues(alpha: 0.3),
+                ),
               ),
               focusedBorder: const UnderlineInputBorder(
                 borderSide: BorderSide(color: AppColors.accent),
@@ -386,14 +519,20 @@ class _CopilotScreenState extends State<CopilotScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textMuted),
+              ),
             ),
             TextButton(
               onPressed: () {
                 _renameSession(session, controller.text);
                 Navigator.pop(context);
               },
-              child: const Text('Rename', style: TextStyle(color: AppColors.accent)),
+              child: const Text(
+                'Rename',
+                style: TextStyle(color: AppColors.accent),
+              ),
             ),
           ],
         );
@@ -410,9 +549,9 @@ class _CopilotScreenState extends State<CopilotScreen> {
           title: Text(
             'Delete Session',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: const Text(
             'Are you sure you want to permanently delete this advisor session?',
@@ -421,14 +560,20 @@ class _CopilotScreenState extends State<CopilotScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textMuted),
+              ),
             ),
             TextButton(
               onPressed: () {
                 _deleteSession(session);
                 Navigator.pop(context);
               },
-              child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.redAccent),
+              ),
             ),
           ],
         );
@@ -466,18 +611,27 @@ class _CopilotScreenState extends State<CopilotScreen> {
             children: [
               _buildTopBar(),
               _buildActiveContextBanner(),
+              _buildCopilotStatusBanner(),
               Expanded(
                 child: Stack(
                   children: [
                     const Positioned(
                       top: 40,
                       right: -130,
-                      child: _AmbientGlow(color: AppColors.accent, size: 280, opacity: 0.08),
+                      child: _AmbientGlow(
+                        color: AppColors.accent,
+                        size: 280,
+                        opacity: 0.08,
+                      ),
                     ),
                     const Positioned(
                       bottom: 80,
                       left: -140,
-                      child: _AmbientGlow(color: AppColors.secondaryAccent, size: 260, opacity: 0.04),
+                      child: _AmbientGlow(
+                        color: AppColors.secondaryAccent,
+                        size: 260,
+                        opacity: 0.04,
+                      ),
                     ),
                     _currentSession == null || _currentSession!.messages.isEmpty
                         ? _buildEmptyState()
@@ -501,14 +655,19 @@ class _CopilotScreenState extends State<CopilotScreen> {
       ),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.06)),
+          bottom: BorderSide(
+            color: AppColors.textPrimary.withValues(alpha: 0.06),
+          ),
         ),
       ),
       child: Row(
         children: [
           Builder(
             builder: (context) => IconButton(
-              icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
+              icon: const Icon(
+                Icons.menu_rounded,
+                color: AppColors.textPrimary,
+              ),
               onPressed: () => Scaffold.of(context).openDrawer(),
             ),
           ),
@@ -522,24 +681,28 @@ class _CopilotScreenState extends State<CopilotScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 Text(
                   'AI Real Estate Advisor',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.accent,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.1,
-                      ),
+                    color: AppColors.accent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                  ),
                 ),
               ],
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textMuted, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textMuted,
+              size: 20,
+            ),
             onPressed: () {
               if (context.canPop()) {
                 context.pop();
@@ -559,7 +722,9 @@ class _CopilotScreenState extends State<CopilotScreen> {
     final valueText = _activeValuationContext!.hasFairValue
         ? 'EGP ${(_activeValuationContext!.fairPriceEgp / 1000000).toStringAsFixed(1)}M'
         : 'No Price';
-    final areaText = _activeValuationContext!.location?.latitude != null ? 'Active Valuation' : 'Egyptian Property';
+    final areaText = _activeValuationContext!.location?.latitude != null
+        ? 'Active Valuation'
+        : 'Egyptian Property';
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -569,7 +734,11 @@ class _CopilotScreenState extends State<CopilotScreen> {
       color: AppColors.accent.withValues(alpha: 0.08),
       child: Row(
         children: [
-          const Icon(Icons.analytics_outlined, color: AppColors.accent, size: 16),
+          const Icon(
+            Icons.analytics_outlined,
+            color: AppColors.accent,
+            size: 16,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: SingleChildScrollView(
@@ -578,14 +747,22 @@ class _CopilotScreenState extends State<CopilotScreen> {
                 children: [
                   _buildContextChip('Target: $areaText'),
                   _buildContextChip('Value: $valueText'),
-                  _buildContextChip('Conf: ${(_activeValuationContext!.confidenceScore * 100).round()}%'),
-                  _buildContextChip('Comps: ${_activeValuationContext!.comparablesCount} Properties'),
+                  _buildContextChip(
+                    'Conf: ${(_activeValuationContext!.confidenceScore * 100).round()}%',
+                  ),
+                  _buildContextChip(
+                    'Comps: ${_activeValuationContext!.comparablesCount} Properties',
+                  ),
                 ],
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.cancel_outlined, color: AppColors.textMuted, size: 16),
+            icon: const Icon(
+              Icons.cancel_outlined,
+              color: AppColors.textMuted,
+              size: 16,
+            ),
             onPressed: () {
               setState(() {
                 _activeValuationContext = null;
@@ -597,10 +774,60 @@ class _CopilotScreenState extends State<CopilotScreen> {
     );
   }
 
+  Widget _buildCopilotStatusBanner() {
+    final message = _isBootstrappingWorkspace
+        ? 'Loading Copilot workspace...'
+        : _copilotStatusMessage;
+    if (message == null) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      color: AppColors.secondaryAccent.withValues(alpha: 0.08),
+      child: Row(
+        children: [
+          if (_isBootstrappingWorkspace)
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            const Icon(
+              Icons.info_outline_rounded,
+              color: AppColors.secondaryAccent,
+              size: 18,
+            ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.35,
+              ),
+            ),
+          ),
+          if (!_isBootstrappingWorkspace)
+            TextButton(
+              onPressed: _bootstrapWorkspace,
+              child: const Text('Retry'),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildContextChip(String label) {
     return Container(
       margin: const EdgeInsets.only(right: AppSpacing.sm),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -608,7 +835,11 @@ class _CopilotScreenState extends State<CopilotScreen> {
       ),
       child: Text(
         label,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -634,7 +865,9 @@ class _CopilotScreenState extends State<CopilotScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.accent.withValues(alpha: 0.1),
-                border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.3),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.accent.withValues(alpha: 0.14),
@@ -642,7 +875,11 @@ class _CopilotScreenState extends State<CopilotScreen> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.auto_awesome_outlined, color: AppColors.accent, size: 40),
+              child: const Icon(
+                Icons.auto_awesome_outlined,
+                color: AppColors.accent,
+                size: 40,
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -650,60 +887,76 @@ class _CopilotScreenState extends State<CopilotScreen> {
             'Ask ValorAI Copilot',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.5,
-                ),
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.5,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           const Text(
             'Your institutional-grade Real Estate Advisor powered by the Fair Price Engine and Comparable Market Trend (CMT) metrics.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 40),
           Text(
             'SUGGESTED ANALYTICAL QUESTIONS',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.accent.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.3,
-                  fontSize: 10,
-                ),
+              color: AppColors.accent.withValues(alpha: 0.7),
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.3,
+              fontSize: 10,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          ...questions.map((q) => Card(
-                margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                color: AppColors.surface.withValues(alpha: 0.72),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  side: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.06)),
+          ...questions.map(
+            (q) => Card(
+              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+              color: AppColors.surface.withValues(alpha: 0.72),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                side: BorderSide(
+                  color: AppColors.textPrimary.withValues(alpha: 0.06),
                 ),
-                child: InkWell(
-                  onTap: () => _sendMessage(q),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.accent, size: 16),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Text(
-                            q,
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
+              ),
+              child: InkWell(
+                onTap: () => _sendMessage(q),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        color: AppColors.accent,
+                        size: 16,
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Text(
+                          q,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textMuted, size: 12),
-                      ],
-                    ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: AppColors.textMuted,
+                        size: 12,
+                      ),
+                    ],
                   ),
                 ),
-              )),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -715,7 +968,12 @@ class _CopilotScreenState extends State<CopilotScreen> {
     return Scrollbar(
       child: ListView.builder(
         controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.lg, AppSpacing.md, 120),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.md,
+          120,
+        ),
         physics: const BouncingScrollPhysics(),
         itemCount: messages.length,
         itemBuilder: (context, index) {
@@ -723,6 +981,7 @@ class _CopilotScreenState extends State<CopilotScreen> {
           return _MessageBubble(
             message: msg,
             onActionTap: (text) => _sendMessage(text),
+            onRetry: msg.error == null ? null : _retryLastFailedMessage,
           );
         },
       ),
@@ -731,7 +990,12 @@ class _CopilotScreenState extends State<CopilotScreen> {
 
   Widget _buildMessageComposer() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.lg,
+      ),
       decoration: BoxDecoration(
         color: AppColors.backgroundPrimary,
         border: Border(
@@ -746,28 +1010,40 @@ class _CopilotScreenState extends State<CopilotScreen> {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.08)),
+                border: Border.all(
+                  color: AppColors.textPrimary.withValues(alpha: 0.08),
+                ),
               ),
               child: TextField(
                 controller: _messageController,
                 maxLines: 5,
                 minLines: 1,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                ),
                 decoration: const InputDecoration(
                   hintText: 'Ask AI Advisor...',
                   hintStyle: TextStyle(color: AppColors.textMuted),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Material(
-            color: _isLoading ? AppColors.textMuted.withValues(alpha: 0.2) : AppColors.accent,
+            color: _isLoading
+                ? AppColors.textMuted.withValues(alpha: 0.2)
+                : AppColors.accent,
             borderRadius: BorderRadius.circular(AppRadius.lg),
             child: InkWell(
-              onTap: _isLoading ? null : () => _sendMessage(_messageController.text),
+              onTap: _isLoading
+                  ? null
+                  : () => _sendMessage(_messageController.text),
               borderRadius: BorderRadius.circular(AppRadius.lg),
               child: Container(
                 width: 44,
@@ -795,7 +1071,10 @@ class _CopilotScreenState extends State<CopilotScreen> {
     );
   }
 
-  Widget _buildSidebarDrawer(List<CopilotSession> pins, List<CopilotSession> recents) {
+  Widget _buildSidebarDrawer(
+    List<CopilotSession> pins,
+    List<CopilotSession> recents,
+  ) {
     return Drawer(
       backgroundColor: AppColors.backgroundPrimary,
       child: SafeArea(
@@ -811,7 +1090,8 @@ class _CopilotScreenState extends State<CopilotScreen> {
                       children: [
                         Text(
                           'ValorAI Sessions',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
@@ -819,13 +1099,19 @@ class _CopilotScreenState extends State<CopilotScreen> {
                         const SizedBox(height: 2),
                         const Text(
                           'Select or search past analysis',
-                          style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add_comment_outlined, color: AppColors.accent),
+                    icon: const Icon(
+                      Icons.add_comment_outlined,
+                      color: AppColors.accent,
+                    ),
                     onPressed: () {
                       _createNewSession();
                       Navigator.pop(context); // Close drawer
@@ -841,10 +1127,15 @@ class _CopilotScreenState extends State<CopilotScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.06)),
+                  border: Border.all(
+                    color: AppColors.textPrimary.withValues(alpha: 0.06),
+                  ),
                 ),
                 child: TextField(
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                  ),
                   onChanged: (val) {
                     setState(() {
                       _searchQuery = val;
@@ -854,7 +1145,11 @@ class _CopilotScreenState extends State<CopilotScreen> {
                     hintText: 'Search conversations...',
                     hintStyle: TextStyle(color: AppColors.textMuted),
                     border: InputBorder.none,
-                    icon: Icon(Icons.search_rounded, color: AppColors.textMuted, size: 18),
+                    icon: Icon(
+                      Icons.search_rounded,
+                      color: AppColors.textMuted,
+                      size: 18,
+                    ),
                   ),
                 ),
               ),
@@ -873,7 +1168,13 @@ class _CopilotScreenState extends State<CopilotScreen> {
                   if (recents.isEmpty && pins.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(AppSpacing.md),
-                      child: Text('No matching sessions found.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                      child: Text(
+                        'No matching sessions found.',
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
                     )
                   else
                     ...recents.map((s) => _buildDrawerSessionTile(s)),
@@ -888,7 +1189,12 @@ class _CopilotScreenState extends State<CopilotScreen> {
 
   Widget _buildDrawerHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
       child: Text(
         title,
         style: const TextStyle(
@@ -907,7 +1213,10 @@ class _CopilotScreenState extends State<CopilotScreen> {
     return Material(
       color: isActive ? AppColors.surface : Colors.transparent,
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 0),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 0,
+        ),
         title: Text(
           session.title,
           maxLines: 1,
@@ -923,7 +1232,9 @@ class _CopilotScreenState extends State<CopilotScreen> {
           style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
         ),
         leading: Icon(
-          session.isPinned ? Icons.push_pin_rounded : Icons.chat_bubble_outline_rounded,
+          session.isPinned
+              ? Icons.push_pin_rounded
+              : Icons.chat_bubble_outline_rounded,
           color: isActive ? AppColors.accent : AppColors.textMuted,
           size: 16,
         ),
@@ -932,14 +1243,20 @@ class _CopilotScreenState extends State<CopilotScreen> {
           children: [
             IconButton(
               icon: Icon(
-                session.isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+                session.isPinned
+                    ? Icons.push_pin_rounded
+                    : Icons.push_pin_outlined,
                 color: AppColors.textMuted,
                 size: 14,
               ),
               onPressed: () => _togglePinSession(session),
             ),
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded, color: AppColors.textMuted, size: 14),
+              icon: const Icon(
+                Icons.more_vert_rounded,
+                color: AppColors.textMuted,
+                size: 14,
+              ),
               color: AppColors.surface,
               onSelected: (action) {
                 if (action == 'rename') {
@@ -951,11 +1268,20 @@ class _CopilotScreenState extends State<CopilotScreen> {
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: 'rename',
-                  child: Text('Rename', style: TextStyle(color: AppColors.textPrimary, fontSize: 12)),
+                  child: Text(
+                    'Rename',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
                 const PopupMenuItem(
                   value: 'delete',
-                  child: Text('Delete', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                  child: Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.redAccent, fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -974,10 +1300,15 @@ class _CopilotScreenState extends State<CopilotScreen> {
 }
 
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message, required this.onActionTap});
+  const _MessageBubble({
+    required this.message,
+    required this.onActionTap,
+    required this.onRetry,
+  });
 
   final CopilotMessage message;
   final ValueChanged<String> onActionTap;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -986,10 +1317,14 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.lg),
       child: Column(
-        crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            mainAxisAlignment: isUser
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             children: [
               if (!isUser) ...[
                 Container(
@@ -998,31 +1333,40 @@ class _MessageBubble extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.accent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
-                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.3),
+                    ),
                   ),
-                  child: const Icon(Icons.auto_awesome_rounded, color: AppColors.accent, size: 14),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppColors.accent,
+                    size: 14,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   'Valor Advisor',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ] else ...[
                 Text(
                   'You',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.textMuted,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
               const SizedBox(width: AppSpacing.sm),
               Text(
                 _formatTime(message.timestamp),
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                ),
               ),
             ],
           ),
@@ -1032,14 +1376,22 @@ class _MessageBubble extends StatelessWidget {
           else
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
-              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.88),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.88,
+              ),
               decoration: BoxDecoration(
-                color: isUser ? AppColors.accent.withValues(alpha: 0.08) : AppColors.surface.withValues(alpha: 0.7),
+                color: isUser
+                    ? AppColors.accent.withValues(alpha: 0.08)
+                    : AppColors.surface.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(AppRadius.lg),
                   topRight: const Radius.circular(AppRadius.lg),
-                  bottomLeft: Radius.circular(isUser ? AppRadius.lg : AppRadius.sm),
-                  bottomRight: Radius.circular(isUser ? AppRadius.sm : AppRadius.lg),
+                  bottomLeft: Radius.circular(
+                    isUser ? AppRadius.lg : AppRadius.sm,
+                  ),
+                  bottomRight: Radius.circular(
+                    isUser ? AppRadius.sm : AppRadius.lg,
+                  ),
                 ),
                 border: Border.all(
                   color: isUser
@@ -1052,8 +1404,31 @@ class _MessageBubble extends StatelessWidget {
                 children: [
                   Text(
                     message.content,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.5),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
+                  if (message.error != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      message.error!,
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                    if (onRetry != null) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      OutlinedButton.icon(
+                        onPressed: onRetry,
+                        icon: const Icon(Icons.refresh_rounded, size: 16),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ],
                   // Render Custom Structured Evidence Cards if attached
                   if (message.propertySummary != null) ...[
                     const SizedBox(height: AppSpacing.md),
@@ -1063,13 +1438,18 @@ class _MessageBubble extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                     _ConfidenceCard(data: message.confidence!),
                   ],
-                  if (message.evidenceDrivers != null && message.evidenceDrivers!.isNotEmpty) ...[
+                  if (message.evidenceDrivers != null &&
+                      message.evidenceDrivers!.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.md),
                     _EvidenceCard(drivers: message.evidenceDrivers!),
                   ],
-                  if (message.comparables != null && message.comparables!.isNotEmpty) ...[
+                  if (message.comparables != null &&
+                      message.comparables!.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.md),
-                    _ComparableCard(comparables: message.comparables!, onActionTap: onActionTap),
+                    _ComparableCard(
+                      comparables: message.comparables!,
+                      onActionTap: onActionTap,
+                    ),
                   ],
                   if (message.marketInsight != null) ...[
                     const SizedBox(height: AppSpacing.md),
@@ -1085,7 +1465,10 @@ class _MessageBubble extends StatelessWidget {
 
   Widget _buildLoadingIndicator() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -1096,12 +1479,18 @@ class _MessageBubble extends StatelessWidget {
           const SizedBox(
             width: 12,
             height: 12,
-            child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.accent),
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: AppColors.accent,
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Text(
             'Advisor is evaluating telemetry...',
-            style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.8), fontSize: 11),
+            style: TextStyle(
+              color: AppColors.textMuted.withValues(alpha: 0.8),
+              fontSize: 11,
+            ),
           ),
         ],
       ),
@@ -1138,16 +1527,20 @@ class _PropertySummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.home_work_outlined, color: AppColors.accent, size: 14),
+              const Icon(
+                Icons.home_work_outlined,
+                color: AppColors.accent,
+                size: 14,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'PROPERTY SUMMARY',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                      fontSize: 9,
-                    ),
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                  fontSize: 9,
+                ),
               ),
             ],
           ),
@@ -1168,9 +1561,18 @@ class _PropertySummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (data.propertyType != null) _buildBadge(data.propertyType!, Icons.apartment_rounded),
-              if (data.sizeSqm != null) _buildBadge('${data.sizeSqm!.round()} sqm', Icons.square_foot_rounded),
-              if (data.bedrooms != null) _buildBadge('${data.bedrooms}B / ${data.bathrooms ?? 0}Ba', Icons.bed_outlined),
+              if (data.propertyType != null)
+                _buildBadge(data.propertyType!, Icons.apartment_rounded),
+              if (data.sizeSqm != null)
+                _buildBadge(
+                  '${data.sizeSqm!.round()} sqm',
+                  Icons.square_foot_rounded,
+                ),
+              if (data.bedrooms != null)
+                _buildBadge(
+                  '${data.bedrooms}B / ${data.bathrooms ?? 0}Ba',
+                  Icons.bed_outlined,
+                ),
             ],
           ),
         ],
@@ -1185,7 +1587,11 @@ class _PropertySummaryCard extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
@@ -1206,23 +1612,29 @@ class _ConfidenceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.backgroundPrimary.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.secondaryAccent.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: AppColors.secondaryAccent.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.verified_outlined, color: AppColors.secondaryAccent, size: 14),
+              const Icon(
+                Icons.verified_outlined,
+                color: AppColors.secondaryAccent,
+                size: 14,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'MODEL CONFIDENCE',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.secondaryAccent,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                      fontSize: 9,
-                    ),
+                  color: AppColors.secondaryAccent,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                  fontSize: 9,
+                ),
               ),
             ],
           ),
@@ -1232,11 +1644,19 @@ class _ConfidenceCard extends StatelessWidget {
             children: [
               Text(
                 '$percentage% Score',
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
                 data.label,
-                style: const TextStyle(color: AppColors.secondaryAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: AppColors.secondaryAccent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -1247,25 +1667,37 @@ class _ConfidenceCard extends StatelessWidget {
               value: data.score,
               minHeight: 4,
               backgroundColor: AppColors.surface,
-              valueColor: const AlwaysStoppedAnimation(AppColors.secondaryAccent),
+              valueColor: const AlwaysStoppedAnimation(
+                AppColors.secondaryAccent,
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          ...data.factors.entries.map((f) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(f.key, style: const TextStyle(color: AppColors.textMuted, fontSize: 10)),
-                    Text('${(f.value * 100).round()}%',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        )),
-                  ],
-                ),
-              )),
+          ...data.factors.entries.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    f.key,
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 10,
+                    ),
+                  ),
+                  Text(
+                    '${(f.value * 100).round()}%',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1284,23 +1716,29 @@ class _EvidenceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.backgroundPrimary.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.08)),
+        border: Border.all(
+          color: AppColors.textPrimary.withValues(alpha: 0.08),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.analytics_outlined, color: AppColors.accent, size: 14),
+              const Icon(
+                Icons.analytics_outlined,
+                color: AppColors.accent,
+                size: 14,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'EVIDENCE DRIVERS',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                      fontSize: 9,
-                    ),
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                  fontSize: 9,
+                ),
               ),
             ],
           ),
@@ -1318,18 +1756,32 @@ class _EvidenceCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(d.label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  Text(
+                    d.label,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
                   Row(
                     children: [
                       Icon(
-                        isPositive ? Icons.arrow_upward_rounded : (isNegative ? Icons.arrow_downward_rounded : Icons.remove),
+                        isPositive
+                            ? Icons.arrow_upward_rounded
+                            : (isNegative
+                                  ? Icons.arrow_downward_rounded
+                                  : Icons.remove),
                         color: color,
                         size: 11,
                       ),
                       const SizedBox(width: 2),
                       Text(
                         '$sign${d.value.toStringAsFixed(1)}%',
-                        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -1356,87 +1808,119 @@ class _ComparableCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.backgroundPrimary.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.08)),
+        border: Border.all(
+          color: AppColors.textPrimary.withValues(alpha: 0.08),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.compare_arrows_rounded, color: AppColors.accent, size: 14),
+              const Icon(
+                Icons.compare_arrows_rounded,
+                color: AppColors.accent,
+                size: 14,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'COMPARABLE CONTROLS',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                      fontSize: 9,
-                    ),
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                  fontSize: 9,
+                ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          ...comparables.map((c) => Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+          ...comparables.map(
+            (c) => Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            c.comparableId,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            [
+                              c.compoundName,
+                              if (c.similarityScore != null)
+                                '${(c.similarityScore! * 100).round()}% match',
+                            ].whereType<String>().join(' - '),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'EGP ${_formatCompact(c.price)}',
+                            style: const TextStyle(
+                              color: AppColors.accent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (c.sizeSqm != null || c.distanceKm != null)
                             Text(
-                              c.comparableId,
+                              [
+                                if (c.sizeSqm != null)
+                                  '${c.sizeSqm!.round()} sqm',
+                                if (c.distanceKm != null)
+                                  '${c.distanceKm!.toStringAsFixed(1)} km',
+                              ].join(' - '),
                               style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                                color: AppColors.textMuted,
+                                fontSize: 9,
                               ),
                             ),
-                            Text(
-                              '${c.compoundName ?? 'Submarket'} • ${(c.similarityScore * 100).round()}% match',
-                              style: const TextStyle(color: AppColors.textMuted, fontSize: 9),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              'EGP ${_formatCompact(c.price)}',
-                              style: const TextStyle(
-                                color: AppColors.accent,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              '${c.sizeSqm.round()} sqm • ${c.distanceKm.toStringAsFixed(1)} km',
-                              style: const TextStyle(color: AppColors.textMuted, fontSize: 9),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const Divider(height: 8, color: Colors.white10),
-                ],
-              )),
+                ),
+                const Divider(height: 8, color: Colors.white10),
+              ],
+            ),
+          ),
           const SizedBox(height: AppSpacing.sm),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () => onActionTap('Show comparable properties.'),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.accent.withValues(alpha: 0.4)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                side: BorderSide(
+                  color: AppColors.accent.withValues(alpha: 0.4),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 8),
               ),
               child: const Text(
                 'Explore in Comparable Explorer',
-                style: TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: AppColors.accent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -1465,48 +1949,94 @@ class _MarketInsightCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.trending_up_rounded, color: AppColors.accent, size: 14),
+              const Icon(
+                Icons.trending_up_rounded,
+                color: AppColors.accent,
+                size: 14,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'MARKET SIGNALS',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                      fontSize: 9,
-                    ),
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                  fontSize: 9,
+                ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildMetric('DEMAND', data.demandTrend, AppColors.secondaryAccent),
-              _buildMetric('STRENGTH', data.marketStrength, AppColors.accent),
-            ],
+          if (data.demandTrend != null || data.marketStrength != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (data.demandTrend != null)
+                  _buildMetric(
+                    'DEMAND',
+                    data.demandTrend!,
+                    AppColors.secondaryAccent,
+                  ),
+                if (data.marketStrength != null)
+                  _buildMetric(
+                    'STRENGTH',
+                    data.marketStrength!,
+                    AppColors.accent,
+                  ),
+              ],
+            ),
+          if (data.activeCompounds.isNotEmpty) ...[
+            const Divider(height: 16, color: Colors.white10),
+            const Text(
+              'Top Compounds',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: data.activeCompounds.map((c) => _buildTag(c)).toList(),
+            ),
+          ],
+          if (data.statements.isNotEmpty) ...[
+            const Divider(height: 16, color: Colors.white10),
+            const Text(
+              'Statements & Narration',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+          ...data.statements.map(
+            (s) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '- ',
+                    style: TextStyle(color: AppColors.accent, fontSize: 11),
+                  ),
+                  Expanded(
+                    child: Text(
+                      s,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const Divider(height: 16, color: Colors.white10),
-          const Text('Top Compounds', style: TextStyle(color: AppColors.textMuted, fontSize: 9, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: data.activeCompounds.map((c) => _buildTag(c)).toList(),
-          ),
-          const Divider(height: 16, color: Colors.white10),
-          const Text('Statements & Narration', style: TextStyle(color: AppColors.textMuted, fontSize: 9, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          ...data.statements.map((s) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('• ', style: TextStyle(color: AppColors.accent, fontSize: 11)),
-                    Expanded(child: Text(s, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10))),
-                  ],
-                ),
-              )),
         ],
       ),
     );
@@ -1516,10 +2046,21 @@ class _MarketInsightCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 8, fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         Text(
           value,
-          style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800),
+          style: TextStyle(
+            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );
@@ -1534,14 +2075,22 @@ class _MarketInsightCard extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 }
 
 class _AmbientGlow extends StatelessWidget {
-  const _AmbientGlow({required this.color, required this.size, required this.opacity});
+  const _AmbientGlow({
+    required this.color,
+    required this.size,
+    required this.opacity,
+  });
 
   final Color color;
   final double size;

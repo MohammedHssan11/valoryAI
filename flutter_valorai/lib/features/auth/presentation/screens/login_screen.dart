@@ -10,6 +10,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_radius.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../../../core/services/firebase/firebase_exceptions.dart';
+import '../state/auth_session_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -95,11 +96,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await action();
+      await AuthSessionManager.instance.completeFirebaseSignIn();
       if (!mounted) {
         return;
       }
       context.goNamed(RouteNames.home);
-    } on Exception catch (exception) {
+    } on Exception catch (exception, stackTrace) {
+      debugPrint("ERROR: $exception");
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) {
         return;
       }

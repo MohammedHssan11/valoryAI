@@ -16,11 +16,14 @@ class WorkspaceSelectorScreen extends StatefulWidget {
   const WorkspaceSelectorScreen({super.key});
 
   @override
-  State<WorkspaceSelectorScreen> createState() => _WorkspaceSelectorScreenState();
+  State<WorkspaceSelectorScreen> createState() =>
+      _WorkspaceSelectorScreenState();
 }
 
 class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
-  final WorkspaceRepository _repository = WorkspaceRepositoryImpl(WorkspaceRemoteDataSource());
+  final WorkspaceRepository _repository = WorkspaceRepositoryImpl(
+    WorkspaceRemoteDataSource(),
+  );
   final TextEditingController _searchController = TextEditingController();
 
   List<Workspace> _workspaces = [];
@@ -53,7 +56,8 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
         _isLoading = false;
 
         // If no active workspace is selected yet, select the first one by default
-        if (WorkspaceStateManager.instance.activeWorkspace == null && list.isNotEmpty) {
+        if (WorkspaceStateManager.instance.activeWorkspace == null &&
+            list.isNotEmpty) {
           WorkspaceStateManager.instance.setActiveWorkspace(list.first);
         } else if (WorkspaceStateManager.instance.activeWorkspace != null) {
           // Sync current active workspace if it changed in repository
@@ -72,13 +76,13 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
     }
   }
 
-  Future<void> _handleCreateWorkspace(String name, String description) async {
+  Future<void> _handleCreateWorkspace(String name) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final newWorkspace = await _repository.createWorkspace(name, description);
+      final newWorkspace = await _repository.createWorkspace(name);
       setState(() {
         _workspaces.insert(0, newWorkspace);
         // Automatically make the newly created workspace active
@@ -94,13 +98,13 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
     }
   }
 
-  Future<void> _handleUpdateWorkspace(int id, String name, String description) async {
+  Future<void> _handleUpdateWorkspace(int id, String name) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final updated = await _repository.updateWorkspace(id, name, description);
+      final updated = await _repository.updateWorkspace(id, name);
       setState(() {
         final index = _workspaces.indexWhere((w) => w.id == id);
         if (index != -1) {
@@ -130,18 +134,17 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
       if (success) {
         setState(() {
           _workspaces.removeWhere((w) => w.id == workspace.id);
-          
+
           // Re-select active workspace if deleted
-          if (WorkspaceStateManager.instance.activeWorkspace?.id == workspace.id) {
-            WorkspaceStateManager.instance.setActiveWorkspace(
-              _workspaces.isNotEmpty ? _workspaces.first : Workspace(
-                id: -999,
-                userId: 1,
-                name: 'Default State',
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-              )
-            );
+          if (WorkspaceStateManager.instance.activeWorkspace?.id ==
+              workspace.id) {
+            if (_workspaces.isNotEmpty) {
+              WorkspaceStateManager.instance.setActiveWorkspace(
+                _workspaces.first,
+              );
+            } else {
+              WorkspaceStateManager.instance.clearActiveWorkspace();
+            }
           }
           _isLoading = false;
         });
@@ -174,7 +177,6 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
 
   void _openCreateDialog() {
     final nameController = TextEditingController();
-    final descController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
     showDialog<void>(
@@ -184,14 +186,16 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            side: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.08)),
+            side: BorderSide(
+              color: AppColors.textPrimary.withValues(alpha: 0.08),
+            ),
           ),
           title: Text(
             'Create Workspace',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: Form(
             key: formKey,
@@ -216,35 +220,31 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: AppSpacing.md),
-                TextFormField(
-                  controller: descController,
-                  style: const TextStyle(color: AppColors.textPrimary),
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    labelStyle: TextStyle(color: AppColors.textMuted),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.accent),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textMuted),
+              ),
             ),
             TextButton(
               onPressed: () {
                 if (formKey.currentState!.validate()) {
-                  _handleCreateWorkspace(nameController.text, descController.text);
+                  _handleCreateWorkspace(nameController.text);
                   Navigator.pop(context);
                 }
               },
-              child: const Text('Create', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Create',
+                style: TextStyle(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );
@@ -254,7 +254,6 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
 
   void _openEditDialog(Workspace workspace) {
     final nameController = TextEditingController(text: workspace.name);
-    final descController = TextEditingController(text: workspace.description);
     final formKey = GlobalKey<FormState>();
 
     showDialog<void>(
@@ -264,14 +263,16 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            side: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.08)),
+            side: BorderSide(
+              color: AppColors.textPrimary.withValues(alpha: 0.08),
+            ),
           ),
           title: Text(
             'Edit Workspace',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: Form(
             key: formKey,
@@ -296,35 +297,31 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: AppSpacing.md),
-                TextFormField(
-                  controller: descController,
-                  style: const TextStyle(color: AppColors.textPrimary),
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    labelStyle: TextStyle(color: AppColors.textMuted),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.accent),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textMuted),
+              ),
             ),
             TextButton(
               onPressed: () {
                 if (formKey.currentState!.validate()) {
-                  _handleUpdateWorkspace(workspace.id, nameController.text, descController.text);
+                  _handleUpdateWorkspace(workspace.id, nameController.text);
                   Navigator.pop(context);
                 }
               },
-              child: const Text('Save', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Save',
+                style: TextStyle(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );
@@ -340,14 +337,16 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            side: BorderSide(color: AppColors.textPrimary.withValues(alpha: 0.08)),
+            side: BorderSide(
+              color: AppColors.textPrimary.withValues(alpha: 0.08),
+            ),
           ),
           title: Text(
             'Delete Workspace',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: Text(
             'Are you sure you want to permanently delete workspace "${workspace.name}"? This action will also delete all associated portfolio properties and chats.',
@@ -356,14 +355,23 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textMuted),
+              ),
             ),
             TextButton(
               onPressed: () {
                 _handleDeleteWorkspace(workspace);
                 Navigator.pop(context);
               },
-              child: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Delete',
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );
@@ -375,8 +383,7 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
   Widget build(BuildContext context) {
     final filtered = _workspaces.where((w) {
       if (_searchQuery.trim().isEmpty) return true;
-      return w.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          w.description.toLowerCase().contains(_searchQuery.toLowerCase());
+      return w.name.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
 
     return Scaffold(
@@ -405,7 +412,9 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
                   if (_isLoading && _workspaces.isEmpty)
                     const Expanded(
                       child: Center(
-                        child: CircularProgressIndicator(color: AppColors.accent),
+                        child: CircularProgressIndicator(
+                          color: AppColors.accent,
+                        ),
                       ),
                     )
                   else if (_errorMessage != null && _workspaces.isEmpty)
@@ -449,7 +458,11 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
             onPressed: () {
               if (context.canPop()) {
                 context.pop();
@@ -466,15 +479,15 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
                 Text(
                   'ValorAI Workspaces',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 Text(
                   'Select or manage your organization boundary',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.textMuted,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelMedium?.copyWith(color: AppColors.textMuted),
                 ),
               ],
             ),
@@ -490,13 +503,18 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.textPrimary.withValues(alpha: 0.06)),
+          border: Border.all(
+            color: AppColors.textPrimary.withValues(alpha: 0.06),
+          ),
         ),
         child: TextField(
           controller: _searchController,
@@ -510,7 +528,11 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
             hintText: 'Search workspaces...',
             hintStyle: TextStyle(color: AppColors.textMuted),
             border: InputBorder.none,
-            icon: Icon(Icons.search_rounded, color: AppColors.textMuted, size: 18),
+            icon: Icon(
+              Icons.search_rounded,
+              color: AppColors.textMuted,
+              size: 18,
+            ),
           ),
         ),
       ),
@@ -520,11 +542,15 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
   Widget _buildWorkspaceCard(Workspace item, bool isActive) {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      color: isActive ? AppColors.accent.withValues(alpha: 0.07) : AppColors.surface.withValues(alpha: 0.72),
+      color: isActive
+          ? AppColors.accent.withValues(alpha: 0.07)
+          : AppColors.surface.withValues(alpha: 0.72),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
         side: BorderSide(
-          color: isActive ? AppColors.accent.withValues(alpha: 0.48) : AppColors.textPrimary.withValues(alpha: 0.07),
+          color: isActive
+              ? AppColors.accent.withValues(alpha: 0.48)
+              : AppColors.textPrimary.withValues(alpha: 0.07),
         ),
       ),
       child: InkWell(
@@ -560,11 +586,22 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
                             if (isActive) ...[
                               const SizedBox(width: AppSpacing.sm),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accent.withValues(alpha: 0.16),
-                                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+                                  color: AppColors.accent.withValues(
+                                    alpha: 0.16,
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.accent.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
                                 ),
                                 child: const Text(
                                   'ACTIVE',
@@ -579,22 +616,15 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
                             ],
                           ],
                         ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          item.description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                            height: 1.4,
-                          ),
-                        ),
                       ],
                     ),
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert_rounded, color: AppColors.textMuted, size: 18),
+                    icon: const Icon(
+                      Icons.more_vert_rounded,
+                      color: AppColors.textMuted,
+                      size: 18,
+                    ),
                     color: AppColors.surface,
                     onSelected: (action) {
                       if (action == 'edit') {
@@ -606,11 +636,23 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
                     itemBuilder: (context) => [
                       const PopupMenuItem(
                         value: 'edit',
-                        child: Text('Edit Workspace', style: TextStyle(color: AppColors.textPrimary, fontSize: 12)),
+                        child: Text(
+                          'Edit Workspace',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
                       const PopupMenuItem(
                         value: 'delete',
-                        child: Text('Delete Workspace', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                        child: Text(
+                          'Delete Workspace',
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -620,9 +662,21 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildMetaItem('Properties', '${item.propertyCount}', Icons.home_work_outlined),
-                  _buildMetaItem('Created', _formatDate(item.createdAt), Icons.calendar_today_rounded),
-                  _buildMetaItem('Last Activity', _formatDate(item.updatedAt), Icons.query_builder_rounded),
+                  _buildMetaItem(
+                    'Properties',
+                    '${item.propertyCount}',
+                    Icons.home_work_outlined,
+                  ),
+                  _buildMetaItem(
+                    'Created',
+                    _formatDate(item.createdAt),
+                    Icons.calendar_today_rounded,
+                  ),
+                  _buildMetaItem(
+                    'Last Activity',
+                    _formatDate(item.updatedAt),
+                    Icons.query_builder_rounded,
+                  ),
                 ],
               ),
             ],
@@ -646,7 +700,11 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
             ),
             Text(
               value,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -659,11 +717,24 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.workspaces_outline, size: 48, color: AppColors.textMuted.withValues(alpha: 0.5)),
+          Icon(
+            Icons.workspaces_outline,
+            size: 48,
+            color: AppColors.textMuted.withValues(alpha: 0.5),
+          ),
           const SizedBox(height: AppSpacing.md),
-          const Text('No Workspaces Found', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+          const Text(
+            'No Workspaces Found',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: AppSpacing.xs),
-          const Text('Try adjusting your search terms or add a new workspace.', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+          const Text(
+            'Try adjusting your search terms or add a new workspace.',
+            style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+          ),
         ],
       ),
     );
@@ -674,11 +745,24 @@ class _WorkspaceSelectorScreenState extends State<WorkspaceSelectorScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline_rounded, size: 48, color: Colors.redAccent),
+          const Icon(
+            Icons.error_outline_rounded,
+            size: 48,
+            color: Colors.redAccent,
+          ),
           const SizedBox(height: AppSpacing.md),
-          const Text('Failed to load workspaces', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+          const Text(
+            'Failed to load workspaces',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: AppSpacing.xs),
-          Text(_errorMessage ?? 'An unknown error occurred.', style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+          Text(
+            _errorMessage ?? 'An unknown error occurred.',
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+          ),
           const SizedBox(height: AppSpacing.md),
           ElevatedButton(
             onPressed: _loadWorkspaces,

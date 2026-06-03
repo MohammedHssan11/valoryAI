@@ -31,6 +31,15 @@ class FirebaseExceptions {
           return 'An unknown authentication error occurred.';
       }
     }
+
+    final exceptionString = exception.toString();
+    if (exceptionString.isNotEmpty && !exceptionString.startsWith('Instance of ')) {
+      if (exceptionString.startsWith('Exception: ')) {
+        return exceptionString.substring(11);
+      }
+      return exceptionString;
+    }
+
     return 'An unknown error occurred.';
   }
 }

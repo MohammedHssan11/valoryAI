@@ -1,0 +1,92 @@
+slow_query
+slow_query
+Fetching candidate listings from the database...
+Total candidate listings found: 19979
+Sampled 500 listings for evaluation.
+Exported cmt_test/datasets/sample_100.csv, sample_250.csv, sample_500.csv
+
+Starting Leave-One-Out validation runs...
+Error evaluating listing 8706236: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8675731: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8637993: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8685573: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Progress: Completed 50/500 valuations. (Last listing: 8708469, error: 8.33%)
+Error evaluating listing 52456342: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8600937: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8651303: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8648794: 1 validation error for RentFairPriceRequest
+  Value error, size_sqm exceeds the Residential rent category maximum of 1000.0. [type=value_error, input_value={'lat': 29.96549987792968...te_garden', 'security']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/value_error
+Error evaluating listing 8592656: 1 validation error for RentFairPriceRequest
+  Value error, size_sqm exceeds the Residential rent category maximum of 1000.0. [type=value_error, input_value={'lat': 30.00690460205078..._closet', 'water_view']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/value_error
+Progress: Completed 100/500 valuations. (Last listing: 8627844, error: 71.43%)
+Error evaluating listing 8710716: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8618647: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52967949: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8676124: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52970358: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52968099: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8678638: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8683861: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8722167: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8665201: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8702659: 1 validation error for RentFairPriceRequest
+  Value error, size_sqm exceeds the Residential rent category maximum of 1000.0. [type=value_error, input_value={'lat': 30.03997802734375...te_garden', 'security']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/value_error
+Error evaluating listing 8719265: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8334796: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8601363: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8670925: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8700609: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8683438: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 51052067: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52446796: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Progress: Completed 200/500 valuations. (Last listing: 8621174, error: 100.00%)
+Error evaluating listing 52456088: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8688466: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52714411: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52715508: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8677726: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8673777: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8628488: 1 validation error for RentFairPriceRequest
+  Value error, size_sqm exceeds the Residential rent category maximum of 1000.0. [type=value_error, input_value={'lat': 30.00497436523437...ed_pool', 'shared_spa']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/value_error
+Error evaluating listing 8682450: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8676057: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Progress: Completed 250/500 valuations. (Last listing: 52714034, error: 13.33%)
+Error evaluating listing 8669007: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8640372: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8709418: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52445203: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8718156: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52463792: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8675654: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8506822: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52454948: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8657201: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Progress: Completed 350/500 valuations. (Last listing: 8612605, error: 11.76%)
+Error evaluating listing 8692935: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52459310: 1 validation error for RentFairPriceRequest
+  Value error, size_sqm exceeds the Residential rent category maximum of 1000.0. [type=value_error, input_value={'lat': 29.96025848388672...ppliances', 'security']}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/value_error
+Error evaluating listing 8710389: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Progress: Completed 400/500 valuations. (Last listing: 8634452, error: 4.00%)
+Error evaluating listing 8645622: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52455203: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52190854: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8718509: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8679133: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8667844: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Progress: Completed 450/500 valuations. (Last listing: 8610799, error: 0.00%)
+Error evaluating listing 8697687: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8675862: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8707081: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8640672: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 8721609: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 52714169: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Error evaluating listing 51933412: 422: {'code': 'AMBIGUOUS_LOCATION', 'message': 'Ambiguous area resolution: AMBIGUOUS_NEAREST_AREA'}
+Progress: Completed 500/500 valuations. (Last listing: 52194413, error: 20.00%)
+Exported cmt_test/raw_results/results_100.csv, results_250.csv, results_500.csv
+
+Leave-One-Out validation completed successfully.

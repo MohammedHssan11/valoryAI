@@ -1,0 +1,30 @@
+{
+  "residential_rent": {
+    "Rows Before": 19979,
+    "Rows After": 9055,
+    "Duplicates Removed": 10924,
+    "Duplicate %": 54.677411281845934,
+    "Remaining Duplicates": 0
+  },
+  "residential_sale": {
+    "Rows Before": 19966,
+    "Rows After": 13933,
+    "Duplicates Removed": 6033,
+    "Duplicate %": 30.216367825303013,
+    "Remaining Duplicates": 0
+  },
+  "commercial_rent": {
+    "Rows Before": 14080,
+    "Rows After": 10527,
+    "Duplicates Removed": 3553,
+    "Duplicate %": 25.234374999999996,
+    "Remaining Duplicates": 0
+  },
+  "commercial_sale": {
+    "Rows Before": 8959,
+    "Rows After": 7426,
+    "Duplicates Removed": 1533,
+    "Duplicate %": 17.111284741600624,
+    "Remaining Duplicates": 0
+  }
+}

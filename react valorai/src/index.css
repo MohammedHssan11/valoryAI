@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary-fixed-dim: #c0c7d4;
+  --color-secondary-fixed: #afecff;
+  --color-surface-variant: #2e363d;
+  --color-on-secondary: #003641;
+  --color-surface-tint: #c0c7d4;
+  --color-on-secondary-fixed: #001f27;
+  --color-on-primary-fixed: #151c26;
+  --color-on-surface-variant: #c5c6cc;
+  --color-surface-container-lowest: #070f15;
+  --color-on-background: #dbe3ec;
+  --color-on-primary: #2a313b;
+  --color-primary-fixed: #dce3f0;
+  --color-on-tertiary-fixed-variant: #00513e;
+  --color-primary: #c0c7d4;
+  --color-outline: #8f9096;
+  --color-on-tertiary-container: #008a6d;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-secondary: #afecff;
+  --color-outline-variant: #45474b;
+  --color-on-secondary-fixed-variant: #004e5d;
+  --color-secondary-fixed-dim: #14d8ff;
+  --color-surface-container-high: #232b32;
+  --color-background: #0c141a;
+  --color-inverse-on-surface: #293138;
+  --color-surface-container-highest: #2e363d;
+  --color-on-primary-fixed-variant: #404752;
+  --color-primary-container: #050b14;
+  --color-tertiary: #1be0b2;
+  --color-surface-dim: #0c141a;
+  --color-on-tertiary: #00382a;
+  --color-on-primary-container: #737a86;
+  --color-surface-container: #192027;
+  --color-tertiary-container: #000e09;
+  --color-on-tertiary-fixed: #002117;
+  --color-on-surface: #dbe3ec;
+  --color-on-error-container: #ffdad6;
+  --color-surface-bright: #323a41;
+  --color-inverse-surface: #dbe3ec;
+  --color-surface-container-low: #151c23;
+  --color-tertiary-fixed-dim: #1be0b2;
+  --color-on-secondary-container: #005b6c;
+  --color-secondary-container: #14d8ff;
+  --color-tertiary-fixed: #4ffdcd;
+  --color-error: #ffb4ab;
+  --color-inverse-primary: #585f6a;
+  --color-surface: #0c141a;
+
+  --font-headline-md: 'Manrope', sans-serif;
+  --font-headline-lg: 'Manrope', sans-serif;
+  --font-label-sm: 'Hanken Grotesk', sans-serif;
+  --font-body-lg: 'Hanken Grotesk', sans-serif;
+  --font-headline-sm: 'Manrope', sans-serif;
+  --font-body-md: 'Hanken Grotesk', sans-serif;
+  --font-label-md: 'Hanken Grotesk', sans-serif;
+
+  --spacing-gutter-mobile: 16px;
+  --spacing-margin-mobile: 20px;
+  --spacing-safe: 20px;
+}
+
+@layer utilities {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    line-height: 1;
+    display: inline-block;
+  }
+  
+  .brand-glow {
+    text-shadow: 0 0 24px rgba(20, 216, 255, 0.4);
+  }
+  
+  .indicator-glow {
+    box-shadow: 0 0 12px rgba(20, 216, 255, 0.8), 0 0 4px rgba(20, 216, 255, 1);
+  }
+
+  .ambient-glow {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 0;
+    background: radial-gradient(circle at 15% 30%, rgba(20, 216, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 70%, rgba(27, 224, 178, 0.03) 0%, transparent 40%);
+  }
+  
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-card-ai {
+    background: rgba(12, 20, 26, 0.6);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(20, 216, 255, 0.15);
+    box-shadow: inset 0 0 20px rgba(27, 224, 178, 0.05);
+  }
+
+  .glass-input {
+    background: rgba(3, 8, 15, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .glass-input:focus-within {
+    border-color: rgba(20, 216, 255, 0.5);
+    box-shadow: 0 4px 20px rgba(20, 216, 255, 0.1);
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Animations */
+  .animate-pulse-slow { animation: pulseSlow 3s ease-in-out infinite; }
+  .animate-shimmer { animation: shimmer 2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+  .animate-fade-in { animation: fadeIn 1.5s ease-out forwards; }
+  .ai-shimmer-bg {
+    background: linear-gradient(90deg, transparent, rgba(20, 216, 255, 0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmerBg 3s infinite linear;
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-150%); }
+  100% { transform: translateX(300%); }
+}
+
+@keyframes shimmerBg {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+  min-height: 100dvh;
+}

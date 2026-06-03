@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from dataclasses import dataclass
+import logging
 import time
 from typing import Any
 import uuid
@@ -33,6 +34,7 @@ from app.services.copilot_tools_service import CopilotToolsService
 
 
 DEFAULT_TOOL_TIMEOUT_SECONDS = 30.0
+logger = logging.getLogger(__name__)
 
 
 class MissingToolInputError(ValueError):
@@ -213,6 +215,17 @@ class DeterministicToolExecutor:
             try:
                 payload = self._tool_input(tool_inputs, planned_tool)
             except MissingToolInputError as exc:
+                logger.warning(
+                    "copilot_tool_input_missing",
+                    extra={
+                        "plan_id": plan.plan_id,
+                        "planned_tool": planned_tool.value,
+                        "available_tool_inputs": sorted(
+                            str(key) for key in tool_inputs.keys()
+                        ),
+                        "error": str(exc),
+                    },
+                )
                 failures.append(
                     ToolExecutionFailure(
                         planned_tool=planned_tool,
@@ -314,7 +327,24 @@ class DeterministicToolExecutor:
 
     def _invoke(self, user_id: int, invocation: _Invocation) -> _CompletedInvocation:
         started = time.perf_counter()
+        logger.info(
+            "copilot_tool_invocation_started",
+            extra={
+                "user_id": user_id,
+                "planned_tool": invocation.planned_tool.value,
+                "tool_name": self.invoker.tool_name(invocation.planned_tool),
+            },
+        )
         payload = self.invoker.invoke(user_id, invocation.planned_tool, invocation.payload)
+        logger.info(
+            "copilot_tool_invocation_completed",
+            extra={
+                "user_id": user_id,
+                "planned_tool": invocation.planned_tool.value,
+                "tool_name": self.invoker.tool_name(invocation.planned_tool),
+                "elapsed_ms": round(_elapsed_ms(started), 2),
+            },
+        )
         return _CompletedInvocation(payload=payload, execution_time_ms=_elapsed_ms(started))
 
     def _resolve_future(
@@ -350,6 +380,16 @@ class DeterministicToolExecutor:
         exc: Exception,
         execution_time_ms: float,
     ) -> ToolExecutionFailure:
+        logger.warning(
+            "copilot_tool_invocation_failed",
+            extra={
+                "planned_tool": invocation.planned_tool.value,
+                "tool_name": self.invoker.tool_name(invocation.planned_tool),
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "elapsed_ms": round(execution_time_ms, 2),
+            },
+        )
         return ToolExecutionFailure(
             planned_tool=invocation.planned_tool,
             tool_name=self.invoker.tool_name(invocation.planned_tool),
