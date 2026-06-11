@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
+from fastapi import HTTPException
 
-from app.api.routes import pricing as pricing_routes
-from app.main import app
+from app.api.schemas.pricing import RentFairPriceRequest
+from app.services import valuation_service
 
 
 BASE_REQUEST = {
@@ -59,13 +59,31 @@ def install_comparable_snapshot(monkeypatch, comps, *, tier=1, trace=None, area=
             "threshold": 40,
         }
     ]
-    monkeypatch.setattr(pricing_routes, "nearest_area", lambda db, lat, lng: area)
-    monkeypatch.setattr(pricing_routes, "fetch_comps", lambda db, params, include_trace: (comps, tier, trace))
+    monkeypatch.setattr(valuation_service, "nearest_area", lambda db, lat, lng: area)
+    monkeypatch.setattr(valuation_service, "fetch_comps", lambda db, params, include_trace: (comps, tier, trace))
+
+
+class ServiceResponse:
+    status_code = 200
+
+    def __init__(self, data):
+        self._data = data
+
+    def json(self):
+        return {"data": self._data.model_dump(mode="json")}
 
 
 def post_valuation(payload=BASE_REQUEST, *, request_id="valuation-regression"):
-    client = TestClient(app)
-    return client.post("/v1/rent/fair-price", json=payload, headers={"X-Request-ID": request_id})
+    del request_id
+    try:
+        data = valuation_service.price_listing(
+            RentFairPriceRequest.model_validate(payload),
+            db=None,
+            ctx={"stage": "contract_resolution", "comps_count": None, "tier_used": None},
+        )
+    except HTTPException as exc:
+        return ServiceResponse(exc.detail)
+    return ServiceResponse(data)
 
 
 def test_same_request_produces_identical_valuation_snapshot(monkeypatch):

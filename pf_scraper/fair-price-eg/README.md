@@ -57,6 +57,19 @@ The Broker Terminal is designed to feel like a high-end computational tool.
 *   **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, Framer Motion, Zustand, Lucide-React.
 *   **Integrations:** SSE for streaming, isolated LLM provider wrappers.
 
+## Docker Deployment Auth Configuration
+The Docker deployment path requires Firebase configuration for both sides of authentication:
+*   `FIREBASE_PROJECT_ID` is consumed by the FastAPI backend to verify Firebase ID tokens during `/v1/auth/token-exchange`.
+*   `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, and `VITE_FIREBASE_APP_ID` are consumed by the React/Vite frontend at Docker build time.
+
+Copy `.env.example` to `.env`, fill the backend Firebase project id and the Firebase Web SDK values, then rebuild the frontend image:
+
+```bash
+docker compose --env-file .env up --build
+```
+
+Because Vite embeds `VITE_*` values into the static bundle, changing Firebase Web SDK values requires rebuilding the `frontend` image.
+
 ## 11. Current Capabilities
 ✅ Deterministic pricing and comparable retrieval  
 ✅ Live SSE orchestration streaming with granular telemetry  

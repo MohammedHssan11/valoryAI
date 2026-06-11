@@ -1,5 +1,10 @@
 import type { BrokerOrchestrationResponse } from "@/types/broker";
+import type { CopilotOrchestratorResponse } from "@/types/copilot";
+import type { InvestmentToolResponse } from "@/types/investment";
+import type { MarketInsightToolResponse } from "@/types/marketInsight";
+import type { NegotiationToolResponse } from "@/types/negotiation";
 import type { ComparableItem, RentFairPriceData, RentFairPriceRequest } from "@/types/valuation";
+import type { WhatIfToolResponse } from "@/types/whatIf";
 
 export const sampleRequest: RentFairPriceRequest = {
   lat: 30.0444,
@@ -149,6 +154,43 @@ export const sampleValuation: RentFairPriceData = {
       },
     },
   },
+  engine_used: "CMT",
+  routing_reason: "GoldilocksZone",
+  explainability: {
+    router_explanation: "CMT selected due to optimal comparable density (12 comps).",
+    confidence_explanation: {
+      confidence_level: "High",
+      confidence_reason: "High confidence because 12 similar properties were found.",
+    },
+    fairness_explanation: {
+      estimated_value: 90000,
+      asking_price: 95000,
+      difference_amount: 5000,
+      difference_percentage: 5.56,
+      status: "Within Fair Value Range",
+    },
+    narrative_explanation: {
+      summary: "The property's fair value is 90,000 EGP.",
+      why_this_price: "This is based on 12 highly similar properties recently listed nearby.",
+      strongest_factors: "Prices in this specific compound strongly anchor the valuation.",
+      confidence_reason: "High confidence because 12 similar properties were found.",
+    },
+    comparable_evidence: [
+      {
+        property_id: "comp-001",
+        price: 90000,
+        size_sqm: 150,
+        bedrooms: 3,
+        bathrooms: 2,
+        furnishing_status: "furnished",
+        compound_name: "Nile Quarter",
+        distance_km: 0.42,
+        similarity_score: 1,
+        similarity_reason: "SAME_AREA_MATCH",
+      },
+    ],
+    feature_drivers: [],
+  },
   explanation: [
     "12 similar listings found using same compound/neighborhood around Central Cairo.",
     "Fair price computed using weighted median.",
@@ -275,14 +317,18 @@ export const sampleBrokerResponse: BrokerOrchestrationResponse = {
     opportunity_risk_notes: ["Monitor spread widening before repricing.", "Do not infer external demand signals."],
     analytical_conclusion: "The target remains aligned with the deterministic valuation evidence.",
     authoritative_values: {
+      valuation_id: "val-broker-1",
       fair_price_egp: sampleValuation.fair_price_egp,
       range_low_egp: sampleValuation.range_low_egp,
       range_high_egp: sampleValuation.range_high_egp,
+      confidence_label: sampleValuation.confidence.label,
+      engine_used: "TruthLayer",
+      routing_reason: "Valuation context supplied by Broker contract fixture.",
+      source: "TruthLayer",
       flag: sampleValuation.flag,
       tier_used: sampleValuation.tier_used,
       comps_count: sampleValuation.comps_count,
       confidence_score: sampleValuation.confidence.score,
-      confidence_label: sampleValuation.confidence.label,
     },
     evidence_ids: ["valuation_summary", "comp-001"],
     referenced_comp_listing_ids: ["comp-001"],
@@ -297,14 +343,18 @@ export const sampleBrokerResponse: BrokerOrchestrationResponse = {
     session_id: "broker-session-1",
     user_message: "Explain the valuation",
     valuation_summary: {
+      valuation_id: "val-broker-1",
       fair_price_egp: sampleValuation.fair_price_egp,
       range_low_egp: sampleValuation.range_low_egp,
       range_high_egp: sampleValuation.range_high_egp,
+      confidence_label: sampleValuation.confidence.label,
+      engine_used: "TruthLayer",
+      routing_reason: "Valuation context supplied by Broker contract fixture.",
+      source: "TruthLayer",
       flag: sampleValuation.flag,
       tier_used: sampleValuation.tier_used,
       comps_count: sampleValuation.comps_count,
       confidence_score: sampleValuation.confidence.score,
-      confidence_label: sampleValuation.confidence.label,
       area: sampleValuation.area,
       property_category: sampleValuation.property_category,
       valuation_contract: sampleValuation.valuation_contract,
@@ -404,5 +454,590 @@ export const sampleBrokerResponse: BrokerOrchestrationResponse = {
     checks: [],
     violations: [],
     sanitized: false,
+  },
+};
+
+export const sampleWhatIfResponse: WhatIfToolResponse = {
+  tool_name: "what_if",
+  base_valuation: 90000,
+  scenario_valuation: 108000,
+  base_valuation_id: "val-base-1",
+  scenario_valuation_id: "val-scenario-1",
+  fairness_valuation_id: "val-fairness-1",
+  delta_value: 18000,
+  delta_percentage: 20,
+  fairness_status: "Above Fair Value",
+  confidence_level: "High",
+  assumptions_used: ["Parking = Unknown"],
+  feature_changes: {
+    added: [
+      {
+        feature: "Parking",
+        before: false,
+        after: true,
+        unit: null,
+      },
+    ],
+    removed: [],
+    modified: [
+      {
+        feature: "Size",
+        before: 150,
+        after: 180,
+        unit: "sqm",
+      },
+    ],
+  },
+  explainability: {
+    tool_name: "explainability",
+    valuation_id: "val-scenario-1",
+    summary: "Scenario valuation increased after expanding the property profile.",
+    why_this_price: "The scenario is benchmarked against larger high-similarity comparables.",
+    strongest_factors: "Size and parking are the strongest scenario drivers.",
+    confidence_reason: "Confidence remains high because comparable density is strong.",
+    fairness_status: "Above Fair Value",
+    feature_drivers: [{ feature: "Size", impact: 18000 }],
+    comparable_evidence: [{ comparable_id: "scenario-comp-1" }],
+    timestamp: "2026-06-09T00:00:00Z",
+    source: "TruthLayer",
+  },
+  comparables: {
+    tool_name: "comparable",
+    valuation_id: "val-scenario-1",
+    comparable_count: 1,
+    comparables: [
+      {
+        comparable_id: "scenario-comp-1",
+        price: 110000,
+        size_sqm: 180,
+        bedrooms: 3,
+        bathrooms: 3,
+        compound_name: "Nile Quarter",
+        distance_km: 0.42,
+        similarity_reason: "Expanded unit with similar finish and location.",
+        source: "TruthLayer",
+      },
+    ],
+    timestamp: "2026-06-09T00:00:00Z",
+    source: "TruthLayer",
+  },
+  timestamp: "2026-06-09T00:00:00Z",
+  source: "TruthLayer",
+};
+
+export const sampleNegotiationResponse: NegotiationToolResponse = {
+  tool_name: "negotiation",
+  valuation_id: "val-negotiation-1",
+  asking_price: 118000,
+  fair_price: 90000,
+  fairness_status: "Above Fair Value",
+  price_gap: 28000,
+  price_gap_percentage: 31.1111,
+  confidence_level: "High",
+  confidence_reason: "Confidence is high because comparable depth and similarity are strong.",
+  negotiation_position: "Overpriced",
+  negotiation_position_reason: "TruthLayer classifies the asking price as Above Fair Value.",
+  negotiation_position_evidence: [
+    {
+      source_tool: "valuation",
+      valuation_id: "val-negotiation-1",
+      field: "fair_price",
+      comparable_id: null,
+    },
+    {
+      source_tool: "fairness",
+      valuation_id: "val-negotiation-1",
+      field: "fairness_status",
+      comparable_id: null,
+    },
+  ],
+  broker_talking_points: [
+    {
+      text: "Asking price exceeds the TruthLayer fair price by 28,000 EGP (31.11%).",
+      evidence: [
+        {
+          source_tool: "input",
+          valuation_id: null,
+          field: "asking_price_egp",
+          comparable_id: null,
+        },
+        {
+          source_tool: "valuation",
+          valuation_id: "val-negotiation-1",
+          field: "fair_price",
+          comparable_id: null,
+        },
+      ],
+    },
+    {
+      text: "TruthLayer valuation rationale: The scenario is benchmarked against nearby high-similarity comparables.",
+      evidence: [
+        {
+          source_tool: "explainability",
+          valuation_id: "val-negotiation-1",
+          field: "why_this_price",
+          comparable_id: null,
+        },
+      ],
+    },
+  ],
+  evidence_summary: {
+    valuation_id: "val-negotiation-1",
+    price_range: {
+      low: 82000,
+      high: 105000,
+    },
+    explainability_summary: "The valuation is supported by a high-confidence comparable cluster.",
+    why_this_price: "The scenario is benchmarked against nearby high-similarity comparables.",
+    strongest_factors: "Size, location, and comparable support are the strongest factors.",
+    source: "TruthLayer",
+  },
+  comparable_summary: {
+    valuation_id: "val-negotiation-1",
+    comparable_count: 2,
+    comparable_ids: ["scenario-comp-1", "scenario-comp-2"],
+    observed_prices: [88000, 92000],
+    lowest_observed_price: 88000,
+    highest_observed_price: 92000,
+    source: "TruthLayer",
+  },
+  recommended_offer_band: {
+    low: 88000,
+    high: 90000,
+    derivation:
+      "The asking price is Above Fair Value. The low endpoint is the highest returned comparable price at or below fair_price; the high endpoint is the authoritative TruthLayer fair_price.",
+    comparable_ids_used: ["scenario-comp-1"],
+    evidence: [
+      {
+        source_tool: "valuation",
+        valuation_id: "val-negotiation-1",
+        field: "fair_price",
+        comparable_id: null,
+      },
+      {
+        source_tool: "comparable",
+        valuation_id: "val-negotiation-1",
+        field: "comparables[].price",
+        comparable_id: "scenario-comp-1",
+      },
+    ],
+    source: "TruthLayer-derived",
+  },
+  risk_notes: [
+    {
+      text: "TruthLayer confidence is High: Confidence is high because comparable depth and similarity are strong.",
+      evidence: [
+        {
+          source_tool: "fairness",
+          valuation_id: "val-negotiation-1",
+          field: "confidence_level",
+          comparable_id: null,
+        },
+      ],
+    },
+    {
+      text: "Comparable support is limited to the 2 properties returned by TruthLayer for this valuation snapshot.",
+      evidence: [
+        {
+          source_tool: "comparable",
+          valuation_id: "val-negotiation-1",
+          field: "comparable_count",
+          comparable_id: null,
+        },
+      ],
+    },
+  ],
+  what_if_analysis: {
+    base_valuation: 90000,
+    scenario_valuation: 108000,
+    base_valuation_id: "val-base-1",
+    scenario_valuation_id: "val-scenario-1",
+    delta_value: 18000,
+    delta_percentage: 20,
+    fairness_status: "Above Fair Value",
+    assumptions_used: ["Parking = Unknown"],
+    feature_changes: sampleWhatIfResponse.feature_changes,
+    source: "TruthLayer",
+  },
+  timestamp: "2026-06-09T00:00:00Z",
+  source: "TruthLayer",
+};
+
+export const sampleInvestmentResponse: InvestmentToolResponse = {
+  tool_name: "investment",
+  valuation_id: "val-investment-1",
+  asking_price: 118000,
+  fair_price: 90000,
+  fairness_status: "Above Fair Value",
+  price_gap: 28000,
+  price_gap_percentage: 31.1111,
+  investment_position: "High Risk",
+  investment_position_reason: "TruthLayer classifies the asking price as Above Fair Value.",
+  investment_position_evidence: sampleNegotiationResponse.negotiation_position_evidence,
+  confidence_level: "High",
+  confidence_reason: "Confidence is high because comparable depth and similarity are strong.",
+  investment_summary:
+    "High Risk: TruthLayer classifies the asking price as Above Fair Value. This is evidence-backed opportunity analysis only; no investment return or forecast is asserted.",
+  strengths: [
+    {
+      text: "TruthLayer valuation confidence is High: Confidence is high because comparable depth and similarity are strong.",
+      evidence: [
+        {
+          source_tool: "fairness",
+          valuation_id: "val-investment-1",
+          field: "confidence_level",
+          comparable_id: null,
+        },
+      ],
+    },
+  ],
+  risks: [
+    {
+      text: "Premium asking price: asking price exceeds the TruthLayer fair price by 28,000 EGP (31.11%).",
+      evidence: [
+        {
+          source_tool: "input",
+          valuation_id: null,
+          field: "asking_price_egp",
+          comparable_id: null,
+        },
+        {
+          source_tool: "valuation",
+          valuation_id: "val-investment-1",
+          field: "fair_price",
+          comparable_id: null,
+        },
+      ],
+    },
+    {
+      text: "Investment assessment is limited to current TruthLayer evidence. ROI, yield, returns, and future-price forecasts are not asserted.",
+      evidence: [
+        {
+          source_tool: "valuation",
+          valuation_id: "val-investment-1",
+          field: "fair_price",
+          comparable_id: null,
+        },
+      ],
+    },
+  ],
+  evidence_summary: sampleNegotiationResponse.evidence_summary,
+  comparable_summary: sampleNegotiationResponse.comparable_summary,
+  negotiation_summary: {
+    negotiation_position: sampleNegotiationResponse.negotiation_position,
+    negotiation_position_reason: sampleNegotiationResponse.negotiation_position_reason,
+    recommended_offer_band: sampleNegotiationResponse.recommended_offer_band,
+    broker_talking_points: sampleNegotiationResponse.broker_talking_points,
+    source: "TruthLayer",
+  },
+  what_if_summary: {
+    status: "Available",
+    reason: "Optional What-if Tool sensitivity evidence is available.",
+    analysis: sampleNegotiationResponse.what_if_analysis,
+    source: "TruthLayer",
+  },
+  timestamp: "2026-06-09T00:00:00Z",
+  source: "TruthLayer",
+};
+
+export const sampleMarketInsightResponse: MarketInsightToolResponse = {
+  tool_name: "market_insight",
+  market_summary:
+    "Observed 6 persisted TruthLayer valuations in this workspace history. Median observed fair value is EGP 4,450,000.",
+  valuation_volume: 6,
+  confidence_distribution: {
+    valuation_count: 6,
+    counts: {
+      High: 4,
+      Moderate: 2,
+    },
+    predominant_level: "High",
+  },
+  fair_value_distribution: {
+    valuation_count: 6,
+    minimum_fair_value: 3900000,
+    median_fair_value: 4450000,
+    maximum_fair_value: 5200000,
+  },
+  comparable_density: {
+    valuation_count: 6,
+    minimum_comparable_count: 3,
+    median_comparable_count: 6,
+    maximum_comparable_count: 9,
+    density_level: "High",
+    measurement_sources: {
+      shadow_logs: 4,
+      comparable_evidence: 2,
+    },
+  },
+  active_compounds: [
+    {
+      name: "Nile Quarter",
+      valuation_count: 4,
+      median_fair_value: 4520000,
+      confidence_distribution: {
+        High: 3,
+        Moderate: 1,
+      },
+      comparable_density: "High",
+      median_comparable_count: 7,
+    },
+    {
+      name: "Garden Heights",
+      valuation_count: 2,
+      median_fair_value: 4100000,
+      confidence_distribution: {
+        High: 1,
+        Moderate: 1,
+      },
+      comparable_density: "Moderate",
+      median_comparable_count: 4,
+    },
+  ],
+  active_areas: [
+    {
+      name: "Central Cairo",
+      valuation_count: 3,
+      median_fair_value: 4500000,
+      confidence_distribution: {
+        High: 2,
+        Moderate: 1,
+      },
+      comparable_density: "High",
+      median_comparable_count: 6,
+    },
+    {
+      name: "New Cairo",
+      valuation_count: 3,
+      median_fair_value: 4400000,
+      confidence_distribution: {
+        High: 2,
+        Moderate: 1,
+      },
+      comparable_density: "Moderate",
+      median_comparable_count: 4,
+    },
+  ],
+  evidence_summary: {
+    valuation_ids: ["val-001", "val-002", "val-003", "val-004", "val-005", "val-006"],
+    source_record_counts: {
+      valuation_snapshots: 6,
+      prediction_logs: 6,
+      shadow_logs: 4,
+      comparable_evidence: 2,
+      tool_events: 6,
+      workspace_history: 6,
+      scenario_history: 1,
+    },
+    filters_used: {
+      workspace_id: 11,
+      compound_name: "Nile Quarter",
+      property_type: "Apartment",
+      h3_res9: "89754e64993ffff",
+      time_window: "90d",
+    },
+    statements: [
+      {
+        text: "Observed 6 persisted TruthLayer valuations matching the selected filters.",
+        evidence: ["valuation_snapshots:val-001", "valuation_snapshots:val-002"],
+      },
+      {
+        text: "Median observed fair value is EGP 4,450,000.",
+        evidence: ["valuation_snapshots:val-003"],
+      },
+      {
+        text: "Comparable density is High with a median comparable count of 6.",
+        evidence: ["shadow_logs:val-001", "comparable_evidence:val-004"],
+      },
+    ],
+    traceability_note:
+      "Descriptive analytics only. Every statement is derived from persisted tenant-scoped TruthLayer records.",
+  },
+  data_sources_used: [
+    "valuation_snapshots",
+    "prediction_logs",
+    "shadow_logs",
+    "tool_events",
+    "workspace_history",
+    "comparable_evidence",
+    "scenario_history",
+  ],
+  timestamp: "2026-06-10T00:00:00Z",
+  source: "TruthLayer",
+};
+
+export const sampleSparseMarketInsightResponse: MarketInsightToolResponse = {
+  ...sampleMarketInsightResponse,
+  market_summary: "Observed 1 persisted TruthLayer valuation in this workspace history.",
+  valuation_volume: 1,
+  confidence_distribution: {
+    valuation_count: 1,
+    counts: {
+      Unknown: 1,
+    },
+    predominant_level: "Unknown",
+  },
+  fair_value_distribution: {
+    valuation_count: 1,
+    minimum_fair_value: 3900000,
+    median_fair_value: 3900000,
+    maximum_fair_value: 3900000,
+  },
+  comparable_density: {
+    valuation_count: 1,
+    minimum_comparable_count: 0,
+    median_comparable_count: 0,
+    maximum_comparable_count: 0,
+    density_level: "Sparse",
+    measurement_sources: {
+      shadow_logs: 1,
+    },
+  },
+  active_compounds: [
+    {
+      name: "Nile Quarter",
+      valuation_count: 1,
+      median_fair_value: 3900000,
+      confidence_distribution: {
+        Unknown: 1,
+      },
+      comparable_density: "Sparse",
+      median_comparable_count: 0,
+    },
+  ],
+  active_areas: [],
+  evidence_summary: {
+    ...sampleMarketInsightResponse.evidence_summary,
+    valuation_ids: ["val-001"],
+    source_record_counts: {
+      valuation_snapshots: 1,
+      prediction_logs: 1,
+      shadow_logs: 1,
+      comparable_evidence: 0,
+      tool_events: 1,
+      workspace_history: 1,
+      scenario_history: 0,
+    },
+    statements: [
+      {
+        text: "Observed 1 persisted TruthLayer valuation matching the selected filters.",
+        evidence: ["valuation_snapshots:val-001"],
+      },
+      {
+        text: "Comparable density is Sparse with a median comparable count of 0.",
+        evidence: ["shadow_logs:val-001"],
+      },
+    ],
+  },
+  data_sources_used: ["valuation_snapshots", "prediction_logs", "shadow_logs", "tool_events", "workspace_history"],
+};
+
+export const sampleEmptyMarketInsightResponse: MarketInsightToolResponse = {
+  ...sampleMarketInsightResponse,
+  market_summary: "No persisted TruthLayer valuations match these filters.",
+  valuation_volume: 0,
+  confidence_distribution: {
+    valuation_count: 0,
+    counts: {},
+    predominant_level: null,
+  },
+  fair_value_distribution: {
+    valuation_count: 0,
+    minimum_fair_value: null,
+    median_fair_value: null,
+    maximum_fair_value: null,
+  },
+  comparable_density: {
+    valuation_count: 0,
+    minimum_comparable_count: null,
+    median_comparable_count: null,
+    maximum_comparable_count: null,
+    density_level: "Insufficient Evidence",
+    measurement_sources: {},
+  },
+  active_compounds: [],
+  active_areas: [],
+  evidence_summary: {
+    valuation_ids: [],
+    source_record_counts: {
+      valuation_snapshots: 0,
+      prediction_logs: 0,
+      shadow_logs: 0,
+      comparable_evidence: 0,
+      tool_events: 0,
+      workspace_history: 0,
+      scenario_history: 0,
+    },
+    filters_used: {
+      workspace_id: 11,
+      compound_name: "Unknown Compound",
+      time_window: "30d",
+    },
+    statements: [
+      {
+        text: "No persisted TruthLayer valuations match the selected filters.",
+        evidence: ["valuation_snapshots:workspace_id=11"],
+      },
+    ],
+    traceability_note:
+      "Descriptive analytics only. Every statement is derived from persisted tenant-scoped TruthLayer records.",
+  },
+  data_sources_used: ["valuation_snapshots", "prediction_logs", "shadow_logs", "tool_events", "workspace_history"],
+};
+
+export const sampleCopilotResponse: CopilotOrchestratorResponse = {
+  runtime_id: "COPILOT_ORCHESTRATOR_LLM_V1",
+  response_id: "narration_response_fixture",
+  intent: "INVESTMENT",
+  status: "DETERMINISTIC_ONLY",
+  delivery_mode: "DETERMINISTIC_FALLBACK",
+  citation_package: {
+    valuation_ids: ["val-investment-1"],
+    tool_event_ids: [],
+    comparable_ids: ["scenario-comp-1"],
+    unavailable_optional_citation_types: ["tool_event_id"],
+  },
+  response: {
+    schema_version: "1.0",
+    composition_status: "SUCCESS",
+    tool_outputs: [
+      {
+        planned_tool: "INVESTMENT_TOOL",
+        tool_name: "investment",
+        payload: sampleInvestmentResponse,
+        ordering_metadata: {
+          order_index: 0,
+          parallel_group_index: null,
+        },
+      },
+    ],
+    failed_tools: [],
+    full_evidence: {
+      comparables: [
+        {
+          planned_tool: "INVESTMENT_TOOL",
+          comparable: {
+            comparable_id: "scenario-comp-1",
+            price: 88000,
+          },
+        },
+      ],
+      feature_drivers: [],
+      market_insights: [],
+    },
+    citations: {
+      valuation_ids: ["val-investment-1"],
+      tool_event_ids: [],
+      comparable_ids: ["scenario-comp-1"],
+      unavailable_optional_citation_types: ["tool_event_id"],
+    },
+  },
+  audit: {
+    plan_id: "plan_fixture",
+    execution_id: "exec_fixture",
+    composition_status: "SUCCESS",
+    memory_id: "memory_fixture",
+    memory_status: "SUCCESS",
+    narration_status: "DETERMINISTIC_ONLY",
   },
 };

@@ -1,5 +1,6 @@
 import { http } from "@/api/http";
 import { ApiMeta, ApiSuccessEnvelope, isApiErrorEnvelope, isApiSuccessEnvelope, ValorApiError } from "@/api/contracts";
+import { authSessionManager } from "@/auth/authSessionManager";
 import { appConfig } from "@/core/config";
 import type { BrokerChatRequest, BrokerOrchestrationResponse, BrokerReasonRequest, BrokerStageEvent } from "@/types/broker";
 
@@ -29,6 +30,50 @@ function invalidBrokerResponse(requestId?: string): ValorApiError {
     },
     { requestId },
   );
+}
+
+function invalidBrokerRequest(message: string, field?: string): ValorApiError {
+  return new ValorApiError({
+    code: "INVALID_BROKER_REQUEST",
+    message,
+    details: field ? [{ code: "INVALID_BROKER_REQUEST", message, field }] : [],
+  });
+}
+
+function positiveInteger(value: unknown, field: string): number {
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) return value;
+  throw invalidBrokerRequest(`${field} must be a positive integer.`, field);
+}
+
+function brokerRequestPayload(request: BrokerReasonRequest): BrokerReasonRequest {
+  const message = request.message.trim();
+  if (message.length === 0) {
+    throw invalidBrokerRequest("message must not be empty.", "message");
+  }
+  if (message.length > 4000) {
+    throw invalidBrokerRequest("message must be 4000 characters or fewer.", "message");
+  }
+  if (request.session_id != null && (request.session_id.length < 3 || request.session_id.length > 80)) {
+    throw invalidBrokerRequest("session_id must be between 3 and 80 characters.", "session_id");
+  }
+
+  const payload: BrokerReasonRequest = {
+    workspace_id: positiveInteger(request.workspace_id, "workspace_id"),
+    scenario_id: positiveInteger(request.scenario_id, "scenario_id"),
+    message,
+  };
+
+  if (request.session_id !== undefined) {
+    payload.session_id = request.session_id;
+  }
+  if (request.valuation_request !== undefined) {
+    payload.valuation_request = request.valuation_request;
+  }
+  if (request.investor_preferences !== undefined) {
+    payload.investor_preferences = request.investor_preferences;
+  }
+
+  return payload;
 }
 
 function isBrokerStageEvent(value: unknown): value is BrokerStageEvent {
@@ -83,9 +128,10 @@ function unwrapBrokerResponse(
 }
 
 export async function requestBrokerReason(request: BrokerReasonRequest, signal?: AbortSignal): Promise<BrokerResult> {
+  const payload = brokerRequestPayload(request);
   const response = await http.post<ApiSuccessEnvelope<BrokerOrchestrationResponse> | BrokerOrchestrationResponse>(
     "/v1/broker/reason",
-    request,
+    payload,
     { signal },
   );
 
@@ -93,9 +139,10 @@ export async function requestBrokerReason(request: BrokerReasonRequest, signal?:
 }
 
 export async function requestBrokerChat(request: BrokerChatRequest, signal?: AbortSignal): Promise<BrokerResult> {
+  const payload = brokerRequestPayload(request);
   const response = await http.post<ApiSuccessEnvelope<BrokerOrchestrationResponse> | BrokerOrchestrationResponse>(
     "/v1/broker/chat",
-    request,
+    payload,
     { signal },
   );
 
@@ -157,18 +204,36 @@ export async function streamBrokerReason(
   signal?: AbortSignal,
 ): Promise<BrokerOrchestrationResponse | null> {
   const requestId = makeRequestId();
-  const response = await fetch(`${appConfig.apiBaseUrl}/v1/broker/stream`, {
-    method: "POST",
-    headers: {
-      Accept: "text/event-stream",
-      "Content-Type": "application/json",
-      "X-Request-ID": requestId,
-    },
-    body: JSON.stringify(request),
-    signal,
-  });
+  const payload = brokerRequestPayload(request);
+  const fetchStream = async (token: string | null) =>
+    fetch(`${appConfig.apiBaseUrl}/v1/broker/stream`, {
+      method: "POST",
+      headers: {
+        Accept: "text/event-stream",
+        "Content-Type": "application/json",
+        "X-Request-ID": requestId,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+      signal,
+    });
+
+  let response = await fetchStream(await authSessionManager.getValidAccessToken());
+  if (response.status === 401) {
+    try {
+      response = await fetchStream(await authSessionManager.renewSession());
+    } catch {
+      await authSessionManager.expireSession();
+    }
+  }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      await authSessionManager.expireSession();
+    }
+    if (response.status === 403) {
+      authSessionManager.markAccessDenied();
+    }
     return throwFetchError(response, requestId);
   }
 

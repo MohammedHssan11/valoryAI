@@ -1,8 +1,11 @@
-import sys
-sys.path.insert(0, r"c:\Users\mh978\Downloads\mobile computing project\pf_scraper\fair-price-eg\backend")
-from app.db.session import SessionLocal
+import os
+
+import pytest
 from sqlalchemy import text
+
 from app.geo.spatial_authority import extract_candidate_tokens
+
+pytestmark = pytest.mark.integration
 
 SQL = """
 WITH matches AS (
@@ -53,12 +56,18 @@ SELECT DISTINCT * FROM matches
 ORDER BY priority DESC, entity_type ASC, entity_id ASC;
 """
 
-db = SessionLocal()
-try:
-    candidates = extract_candidate_tokens("Villette, 5th Settlement Compounds")
-    print("Candidates:", list(candidates))
-    rows = db.execute(text(SQL), {"candidate_aliases": list(candidates)}).mappings().all()
-    for r in rows:
-        print(dict(r))
-finally:
-    db.close()
+def test_location_authority_union_query_returns_villette_candidates():
+    if os.environ.get("RUN_POSTGIS_INTEGRATION") != "1":
+        pytest.skip("Set RUN_POSTGIS_INTEGRATION=1 with a seeded PostGIS database to run.")
+
+    from app.db.session import SessionLocal
+
+    db = SessionLocal()
+    try:
+        candidates = extract_candidate_tokens("Villette, 5th Settlement Compounds")
+        rows = db.execute(text(SQL), {"candidate_aliases": list(candidates)}).mappings().all()
+    finally:
+        db.close()
+
+    assert rows
+    assert all(row["entity_id"] for row in rows)

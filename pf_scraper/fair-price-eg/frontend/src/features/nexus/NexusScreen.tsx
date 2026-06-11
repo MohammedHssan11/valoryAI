@@ -4,11 +4,12 @@ import { GlassCard } from "@/components/ui/glass";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { APP_ROUTES } from "@/navigation/routes";
 
 export function NexusScreen() {
   const [orbState, setOrbState] = React.useState<"idle" | "thinking" | "analyzing" | "responding">("idle");
   const navigate = useNavigate();
-  const openValuation = React.useCallback(() => navigate("/valuation"), [navigate]);
+  const openValuation = React.useCallback(() => navigate(APP_ROUTES.valuation), [navigate]);
 
   React.useEffect(() => {
     const t1 = setTimeout(() => setOrbState("thinking"), 1000);

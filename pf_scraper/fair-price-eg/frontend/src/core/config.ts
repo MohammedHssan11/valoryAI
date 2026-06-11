@@ -32,4 +32,13 @@ export const appConfig = {
   isProduction: appEnv === "production",
   apiBaseUrl: trimTrailingSlash(readEnv("VITE_API_BASE_URL", "http://localhost:8000")),
   requestTimeoutMs: readNumberEnv("VITE_API_TIMEOUT_MS", 20000),
+  firebase: {
+    apiKey: readEnv("VITE_FIREBASE_API_KEY", ""),
+    authDomain: readEnv("VITE_FIREBASE_AUTH_DOMAIN", ""),
+    projectId: readEnv("VITE_FIREBASE_PROJECT_ID", ""),
+    appId: readEnv("VITE_FIREBASE_APP_ID", ""),
+    storageBucket: readEnv("VITE_FIREBASE_STORAGE_BUCKET", ""),
+    messagingSenderId: readEnv("VITE_FIREBASE_MESSAGING_SENDER_ID", ""),
+    measurementId: readEnv("VITE_FIREBASE_MEASUREMENT_ID", ""),
+  },
 };

@@ -8,10 +8,15 @@ import { Button } from "@/components/ui/button";
 import { GlassCard, GlassPanel } from "@/components/ui/glass";
 import { ComparablePanel } from "@/features/comparables/ComparablePanel";
 import { ExplainabilityPanel } from "@/features/explainability/ExplainabilityPanel";
+import { WhatIfScenarioPanel } from "@/features/what-if/WhatIfScenarioPanel";
 import { useFairRentValuation } from "@/hooks/useFairRentValuation";
+import { bridgeValuationToPropertyContext } from "@/services/propertyContextService";
 import { useAiContinuityStore } from "@/store/aiContinuityStore";
 import { useBrokerStore } from "@/store/brokerStore";
+import { useInvestmentStore } from "@/store/investmentStore";
+import { usePropertyContextStore } from "@/store/propertyContextStore";
 import { useValuationStore } from "@/store/valuationStore";
+import { useWhatIfStore } from "@/store/whatIfStore";
 import {
   AMENITY_OPTIONS,
   CATEGORY_PROPERTY_TYPES,
@@ -30,6 +35,16 @@ function optionalNumber(value: string): number | null {
   if (value.trim() === "") return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function bridgeErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) return error.message;
+  return "Unable to create the backend property context for this valuation.";
+}
+
+function isCancelledBridge(error: unknown): boolean {
+  if (error instanceof ValorApiError && error.code === "REQUEST_CANCELLED") return true;
+  return typeof DOMException !== "undefined" && error instanceof DOMException && error.name === "AbortError";
 }
 
 interface FieldProps {
@@ -69,15 +84,31 @@ function categoryUsesFloor(category?: PropertyCategory): boolean {
 export function ValuationScreen() {
   const { draft, setDraft, updateDraft, resetDraft, lastResult, lastRequest, setLastResult, lastRequestId } = useValuationStore();
   const { setActiveValuation } = useBrokerStore();
+  const {
+    activeWorkspaceId,
+    activePropertyId,
+    activeScenarioId,
+    bridgeStatus,
+    setActivePropertyContext,
+    setBridgeError,
+    setBridgePending,
+  } = usePropertyContextStore();
+  const resetWhatIf = useWhatIfStore((state) => state.reset);
+  const resetInvestment = useInvestmentStore((state) => state.resetInvestment);
   const { setOrbState, pushEvent } = useAiContinuityStore();
   const valuation = useFairRentValuation();
   const { mutate, reset, cancel, isPending } = valuation;
   const error = valuation.error instanceof ValorApiError ? valuation.error : null;
   const [showAdvancedLocation, setShowAdvancedLocation] = React.useState(false);
+  const bridgeAbortRef = React.useRef<AbortController | null>(null);
 
   const submitValuation = React.useCallback(
     (event?: React.FormEvent<HTMLFormElement>) => {
       event?.preventDefault();
+      bridgeAbortRef.current?.abort();
+      bridgeAbortRef.current = null;
+      resetWhatIf();
+      resetInvestment();
       setOrbState("analyzing");
       pushEvent("Rent fair-price valuation submitted");
 
@@ -97,6 +128,37 @@ export function ValuationScreen() {
           setActiveValuation(data);
           setOrbState("responding");
           pushEvent(`Valuation completed with ${data.confidence.label.toLowerCase()} confidence`);
+
+          const bridgeController = new AbortController();
+          bridgeAbortRef.current = bridgeController;
+          setBridgePending(meta.request_id);
+          void bridgeValuationToPropertyContext({
+            request: payload,
+            valuation: data,
+            requestId: meta.request_id,
+            preferredWorkspaceId: activeWorkspaceId,
+            signal: bridgeController.signal,
+          })
+            .then((binding) => {
+              if (bridgeAbortRef.current !== bridgeController) return;
+              setActivePropertyContext({
+                activeWorkspaceId: binding.activeWorkspaceId,
+                activePropertyId: binding.activePropertyId,
+                activeScenarioId: binding.activeScenarioId,
+                requestId: binding.requestId,
+              });
+            })
+            .catch((bridgeError) => {
+              if (bridgeAbortRef.current !== bridgeController || bridgeController.signal.aborted || isCancelledBridge(bridgeError)) {
+                return;
+              }
+              setBridgeError(bridgeErrorMessage(bridgeError), meta.request_id);
+            })
+            .finally(() => {
+              if (bridgeAbortRef.current === bridgeController) {
+                bridgeAbortRef.current = null;
+              }
+            });
         },
         onError: () => {
           setOrbState("idle");
@@ -104,7 +166,20 @@ export function ValuationScreen() {
         },
       });
     },
-    [draft, mutate, pushEvent, setActiveValuation, setLastResult, setOrbState],
+    [
+      activeWorkspaceId,
+      draft,
+      mutate,
+      pushEvent,
+      resetInvestment,
+      resetWhatIf,
+      setActivePropertyContext,
+      setActiveValuation,
+      setBridgeError,
+      setBridgePending,
+      setLastResult,
+      setOrbState,
+    ],
   );
 
   const cancelValuation = React.useCallback(() => {
@@ -159,6 +234,14 @@ export function ValuationScreen() {
       return () => window.clearTimeout(timer);
     }
   }, [isPending, setOrbState]);
+
+  React.useEffect(
+    () => () => {
+      bridgeAbortRef.current?.abort();
+      bridgeAbortRef.current = null;
+    },
+    [],
+  );
 
   return (
     <motion.div variants={stagedReveal} initial="hidden" animate="show" className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-4 md:p-8">
@@ -397,6 +480,8 @@ export function ValuationScreen() {
                 onClick={() => {
                   resetDraft();
                   reset();
+                  resetWhatIf();
+                  resetInvestment();
                 }}
               >
                 <RotateCcw className="h-4 w-4" />
@@ -426,8 +511,18 @@ export function ValuationScreen() {
 
       {lastResult && (
         <div className="grid gap-8">
-          <ComparablePanel comparables={lastResult.top_comps} result={lastResult} subjectPropertyType={lastRequest?.property_type} />
           <ExplainabilityPanel result={lastResult} />
+          <ComparablePanel comparables={lastResult.top_comps} result={lastResult} subjectPropertyType={lastRequest?.property_type} />
+          {lastRequest && (
+            <WhatIfScenarioPanel
+              baseRequest={lastRequest}
+              baseResult={lastResult}
+              workspaceId={activeWorkspaceId}
+              propertyId={activePropertyId}
+              scenarioId={activeScenarioId}
+              bridgeStatus={bridgeStatus}
+            />
+          )}
         </div>
       )}
     </motion.div>

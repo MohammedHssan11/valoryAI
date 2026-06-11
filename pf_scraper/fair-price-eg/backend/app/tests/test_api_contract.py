@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.api.routes import pricing as pricing_routes
+from app.api.schemas.pricing import RentFairPriceResponse
 from app.main import app
 
 
@@ -38,58 +39,60 @@ def comp(index: int):
     }
 
 
-def test_pricing_success_uses_standard_response_envelope(monkeypatch):
-    rows = [comp(index) for index in range(12)]
-    monkeypatch.setattr(pricing_routes, "nearest_area", lambda db, lat, lng: {"area_id": 10, "name": "Central Cairo"})
-    monkeypatch.setattr(
-        pricing_routes,
-        "fetch_comps",
-        lambda db, params, include_trace: (
-            rows,
-            1,
-            [
-                {
-                    "tier": 1,
-                    "tier_label": "same compound/neighborhood",
-                    "reason_code": "SAME_AREA_MATCH",
-                    "scope": "same_area",
-                    "radius_m": 500,
-                    "comps_found": len(rows),
-                    "threshold": 10,
-                    "shortfall": 0,
-                    "attempt_index": 1,
-                    "status": "selected",
-                    "selected": True,
-                }
-            ],
-        ),
-    )
-    monkeypatch.setattr(pricing_routes, "hard_guardrails", lambda comps, **kwargs: (comps, {"kept": len(comps), "removed": 0}))
-    monkeypatch.setattr(pricing_routes, "mad_filter", lambda comps: (comps, {"kept": len(comps), "removed": 0}))
-    monkeypatch.setattr(pricing_routes, "compute_weights", lambda comps, size_sqm, **kwargs: comps)
-    monkeypatch.setattr(pricing_routes, "weighted_median", lambda prices, weights: 30000)
-    monkeypatch.setattr(pricing_routes, "weighted_quantile", lambda prices, weights, quantile: 28000 if quantile < 0.5 else 33000)
-    monkeypatch.setattr(
-        pricing_routes,
-        "compute_confidence",
-        lambda *args, **kwargs: {
+def response_fixture(rows):
+    return RentFairPriceResponse(
+        fair_price_egp=30000,
+        range_low_egp=28000,
+        range_high_egp=33000,
+        flag="OK",
+        tier_used=1,
+        comps_count=len(rows),
+        confidence={
             "score": 0.82,
             "label": "High",
-            "factors": {
-                "count": 0.35,
-                "tier": 0.25,
-                "kept_ratio": 0.2,
-                "dispersion": 0.12,
+            "factors": {"count": 1.0, "tier": 1.0, "kept_ratio": 1.0, "dispersion": 0.8},
+            "dimensions": {
+                "valuation_evidence": {"score": 0.82, "label": "High"},
+                "location_resolution": {"score": 0.95, "label": "High"},
             },
         },
+        explanation=["12 comparable listings retained."],
+        explanation_trace=[{"reason_code": "CONFIDENCE_SCORE", "details": {"score": 0.82}}],
+        retrieval_trace=[
+            {
+                "tier": 1,
+                "tier_label": "same compound/neighborhood",
+                "reason_code": "SAME_AREA_MATCH",
+                "scope": "same_area",
+                "radius_m": 500,
+                "comps_found": len(rows),
+                "threshold": 10,
+                "shortfall": 0,
+                "attempt_index": 1,
+                "status": "selected",
+                "selected": True,
+            }
+        ],
+        spatial_diagnostics={"retrieval_radius_m": 500},
+        evidence_summary={"authoritative_valuation_frozen": True},
+        area={"area_id": 10, "name": "Central Cairo"},
+        property_category="residential_rent",
+        valuation_contract={"governance": {"amenities_override_pricing": False}},
+        amenity_intelligence={"governance": {"canonical_symbol_storage": True}},
+        top_comps=rows[:2],
     )
-    monkeypatch.setattr(pricing_routes, "build_explanation", lambda **kwargs: ["12 comparable listings retained."])
-    monkeypatch.setattr(
-        pricing_routes,
-        "build_explanation_trace",
-        lambda *args, **kwargs: [{"reason_code": "CONFIDENCE_SCORE", "details": {"score": 0.82}}],
-    )
-    monkeypatch.setattr(pricing_routes, "pick_top_comps", lambda weighted, n: weighted[:2])
+
+
+def test_pricing_success_uses_standard_response_envelope(monkeypatch):
+    rows = [comp(index) for index in range(12)]
+
+    def route_router(req, db, ctx, background_tasks, request_id):
+        assert req.property_type == "Apartment"
+        assert ctx["stage"] == "contract_resolution"
+        assert request_id.startswith("req_")
+        return response_fixture(rows)
+
+    monkeypatch.setattr(pricing_routes, "price_listing_router", route_router)
 
     client = TestClient(app)
     response = client.post("/v1/rent/fair-price", json=valid_payload())

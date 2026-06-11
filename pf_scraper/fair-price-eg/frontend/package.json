@@ -7,9 +7,10 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
+    "check:routes": "tsx scripts/check-spa-route-collisions.ts",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run && npm run check:routes",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -18,6 +19,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "axios": "^1.16.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.14.0",
     "framer-motion": "^12.40.0",
     "lucide-react": "^0.546.0",
     "react": "^19.0.1",

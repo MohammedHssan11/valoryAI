@@ -3,15 +3,16 @@ from __future__ import annotations
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.api.schemas.copilot import PropertyStateCreate, ScenarioStateCreate, UserCreate, WorkspaceCreate
+from app.api.schemas.copilot import PropertyStateCreate, ScenarioStateCreate, ToolEventCreate, UserCreate, WorkspaceCreate
 from app.api.schemas.copilot_tools import (
     ExplainabilityToolRequest,
     InvestmentToolRequest,
+    MarketInsightToolRequest,
     NegotiationToolRequest,
     ValuationToolRequest,
     WhatIfToolRequest,
 )
-from app.api.schemas.pricing import RentFairPriceResponse
+from app.api.schemas.pricing import RentFairPriceRequest, RentFairPriceResponse
 from app.db.base import Base
 from app.models.copilot import ToolEvent, ValuationSnapshot
 from app.services.copilot_service import CopilotService
@@ -183,6 +184,89 @@ def test_valuation_and_explainability_tools_apply_scenario_state_and_persist_aud
             pass
         else:
             raise AssertionError("Cross-tenant tool execution must be rejected")
+
+    engine.dispose()
+
+
+def test_direct_valuation_tool_event_persists_snapshot_for_market_and_explainability():
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    factory = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    with factory() as db:
+        copilot = CopilotService(db)
+        user = copilot.create_user(UserCreate(external_subject="direct-user", display_name="Direct User"))
+        workspace = copilot.create_workspace(user.id, WorkspaceCreate(name="Direct Valuation Workspace"))
+        prop = copilot.create_property_state(
+            user.id,
+            PropertyStateCreate(
+                workspace_id=workspace.id,
+                label="Direct Property",
+                location="Central Cairo",
+                area=150,
+                bedrooms=3,
+                bathrooms=2,
+                amenities={"codes": ["BA", "SE"]},
+                valuation_inputs={"lat": 30.0444, "lng": 31.2357},
+            ),
+        )
+        request_payload = {
+            "lat": 30.0444,
+            "lng": 31.2357,
+            "property_type": "Apartment",
+            "property_category": "residential_rent",
+            "bedrooms": 3,
+            "bathrooms": 2,
+            "size_sqm": 150,
+            "target_price_egp": 16000,
+            "amenities": ["BA", "SE"],
+        }
+        truth = truth_router(RentFairPriceRequest.model_validate(request_payload), db)
+
+        event = copilot.record_tool_event(
+            user.id,
+            ToolEventCreate(
+                workspace_id=workspace.id,
+                property_state_id=prop.id,
+                scenario_state_id=None,
+                tool_name="direct_valuation",
+                event_type="valuation.completed",
+                payload={
+                    "source": "direct_valuation",
+                    "request_id": "req_direct_001",
+                    "property_context_signature": "direct-signature",
+                    "valuation_request": request_payload,
+                    "valuation_result": truth.model_dump(mode="json"),
+                },
+            ),
+        )
+
+        snapshot = db.query(ValuationSnapshot).filter(ValuationSnapshot.valuation_id == "req_direct_001").one()
+        assert snapshot.workspace_id == workspace.id
+        assert snapshot.property_state_id == prop.id
+        assert snapshot.router_request["size_sqm"] == 150
+        assert snapshot.normalized_response["valuation_id"] == "req_direct_001"
+        assert snapshot.normalized_response["fair_price"] == 15000
+        assert snapshot.normalized_response["source_attribution"] == "direct_valuation"
+        assert snapshot.explainability_payload["narrative_explanation"]["summary"] == "The property's fair value is 15,000 EGP."
+        assert event.payload["valuation_id"] == "req_direct_001"
+        assert event.payload["response"]["valuation_id"] == "req_direct_001"
+
+        tools = CopilotToolsService(db, router=truth_router)
+        explanation = tools.execute_explainability(
+            user.id,
+            ExplainabilityToolRequest(workspace_id=workspace.id, valuation_id="req_direct_001"),
+        )
+        market = tools.execute_market_insight(
+            user.id,
+            MarketInsightToolRequest(workspace_id=workspace.id, time_window="all"),
+        )
+
+        assert explanation.valuation_id == "req_direct_001"
+        assert explanation.summary == "The property's fair value is 15,000 EGP."
+        assert market.valuation_volume == 1
+        assert market.evidence_summary.valuation_ids == ["req_direct_001"]
+        assert market.evidence_summary.source_record_counts["valuation_snapshots"] == 1
+        assert market.evidence_summary.source_record_counts["tool_events"] >= 1
 
     engine.dispose()
 

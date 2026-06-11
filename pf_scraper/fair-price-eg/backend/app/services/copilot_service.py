@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -30,6 +31,7 @@ from app.models.copilot import (
     ScenarioState,
     ToolEvent,
     User,
+    ValuationSnapshot,
     Workspace,
 )
 
@@ -605,6 +607,7 @@ class CopilotService:
             chat = self.get_chat(user_id, data.chat_id)
             if chat is None or chat.workspace_id != data.workspace_id:
                 raise ValueError("Chat must belong to the same workspace")
+        prop: PropertyState | None = None
         if data.property_state_id is not None:
             prop = self.get_property_state(user_id, data.property_state_id)
             if prop is None or prop.workspace_id != data.workspace_id:
@@ -613,11 +616,181 @@ class CopilotService:
             scenario = self.get_scenario_state(user_id, data.scenario_state_id)
             if scenario is None or scenario.workspace_id != data.workspace_id:
                 raise ValueError("Scenario must belong to the same workspace")
-        event = ToolEvent(user_id=user_id, **data.model_dump())
+        payload = data.payload
+        if self._is_direct_valuation_event(data):
+            self._persist_direct_valuation_snapshot(user_id, data, prop, payload)
+        event = ToolEvent(user_id=user_id, **data.model_dump(exclude={"payload"}), payload=payload)
         self.db.add(event)
         self.db.commit()
         self.db.refresh(event)
         return event
+
+    @staticmethod
+    def _is_direct_valuation_event(data: ToolEventCreate) -> bool:
+        return (
+            data.tool_name == "direct_valuation"
+            and data.event_type == "valuation.completed"
+            and data.payload.get("source") == "direct_valuation"
+        )
+
+    @staticmethod
+    def _payload_record(payload: dict[str, Any], key: str) -> dict[str, Any]:
+        value = payload.get(key)
+        if not isinstance(value, dict):
+            raise ValueError(f"{key} is required for direct valuation snapshot persistence")
+        return value
+
+    @staticmethod
+    def _required_int(payload: dict[str, Any], key: str) -> int:
+        value = payload.get(key)
+        if isinstance(value, bool):
+            raise ValueError(f"{key} must be numeric")
+        try:
+            return int(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{key} is required for direct valuation snapshot persistence") from exc
+
+    @staticmethod
+    def _confidence_label(result: dict[str, Any]) -> str:
+        confidence = result.get("confidence")
+        if isinstance(confidence, dict):
+            label = confidence.get("label")
+            if isinstance(label, str) and label.strip():
+                return label.strip()
+        return "Unknown"
+
+    @staticmethod
+    def _direct_fairness_status(request_payload: dict[str, Any], result: dict[str, Any]) -> str:
+        target = request_payload.get("target_price_egp")
+        try:
+            target_price = int(target) if target is not None else None
+            low = int(result["range_low_egp"])
+            high = int(result["range_high_egp"])
+        except (KeyError, TypeError, ValueError):
+            return "Within Fair Value Range"
+        if target_price is None:
+            return "Within Fair Value Range"
+        if target_price < low:
+            return "Below Fair Value"
+        if target_price > high:
+            return "Above Fair Value"
+        return "Within Fair Value Range"
+
+    def _direct_explainability_payload(
+        self,
+        request_payload: dict[str, Any],
+        result: dict[str, Any],
+    ) -> dict[str, Any]:
+        explainability = result.get("explainability")
+        if isinstance(explainability, dict):
+            return explainability
+
+        fair_price = self._required_int(result, "fair_price_egp")
+        confidence_label = self._confidence_label(result)
+        confidence_reason = f"{confidence_label} confidence from the persisted TruthLayer direct valuation."
+        explanation = result.get("explanation")
+        strongest = (
+            str(explanation[0])
+            if isinstance(explanation, list) and explanation and isinstance(explanation[0], str)
+            else "Persisted TruthLayer valuation evidence anchors this snapshot."
+        )
+        return {
+            "router_explanation": result.get("routing_reason") or "Direct valuation response persisted as TruthLayer evidence.",
+            "confidence_explanation": {
+                "confidence_level": confidence_label,
+                "confidence_reason": confidence_reason,
+            },
+            "fairness_explanation": {
+                "estimated_value": fair_price,
+                "asking_price": request_payload.get("target_price_egp"),
+                "difference_amount": None,
+                "difference_percentage": None,
+                "status": self._direct_fairness_status(request_payload, result),
+            },
+            "narrative_explanation": {
+                "summary": f"The property's fair value is {fair_price:,.0f} EGP.",
+                "why_this_price": "This explanation is grounded in the persisted direct TruthLayer valuation response.",
+                "strongest_factors": strongest,
+                "confidence_reason": confidence_reason,
+            },
+            "comparable_evidence": [],
+            "feature_drivers": [],
+        }
+
+    def _direct_normalized_response(
+        self,
+        valuation_id: str,
+        result: dict[str, Any],
+        timestamp: datetime,
+    ) -> dict[str, Any]:
+        return {
+            "tool_name": "valuation",
+            "valuation_id": valuation_id,
+            "fair_price": self._required_int(result, "fair_price_egp"),
+            "price_range": {
+                "low": self._required_int(result, "range_low_egp"),
+                "high": self._required_int(result, "range_high_egp"),
+            },
+            "confidence_level": self._confidence_label(result),
+            "engine_used": str(result.get("engine_used") or "UNKNOWN"),
+            "routing_reason": str(result.get("routing_reason") or "UNKNOWN"),
+            "timestamp": timestamp.isoformat(),
+            "source": "TruthLayer",
+            "source_attribution": "direct_valuation",
+        }
+
+    def _persist_direct_valuation_snapshot(
+        self,
+        user_id: int,
+        data: ToolEventCreate,
+        prop: PropertyState | None,
+        payload: dict[str, Any],
+    ) -> None:
+        if prop is None:
+            raise ValueError("Property is required for direct valuation snapshot persistence")
+
+        request_payload = self._payload_record(payload, "valuation_request")
+        result = self._payload_record(payload, "valuation_result")
+        request_id = payload.get("request_id")
+        valuation_id = request_id if isinstance(request_id, str) and request_id.strip() else f"val_{uuid.uuid4().hex}"
+        valuation_id = valuation_id.strip()
+        if len(valuation_id) > 80:
+            raise ValueError("request_id is too long for valuation snapshot persistence")
+
+        snapshot = (
+            self.db.query(ValuationSnapshot)
+            .filter(
+                ValuationSnapshot.valuation_id == valuation_id,
+                ValuationSnapshot.user_id == user_id,
+                ValuationSnapshot.workspace_id == data.workspace_id,
+            )
+            .first()
+        )
+        if snapshot is None:
+            snapshot = ValuationSnapshot(
+                valuation_id=valuation_id,
+                user_id=user_id,
+                workspace_id=data.workspace_id,
+                property_state_id=prop.id,
+                scenario_state_id=data.scenario_state_id,
+                router_request=request_payload,
+                normalized_response={},
+                explainability_payload=self._direct_explainability_payload(request_payload, result),
+            )
+            self.db.add(snapshot)
+            self.db.flush()
+        else:
+            snapshot.property_state_id = prop.id
+            snapshot.scenario_state_id = data.scenario_state_id
+            snapshot.router_request = request_payload
+            snapshot.explainability_payload = self._direct_explainability_payload(request_payload, result)
+            self._touch(snapshot)
+
+        timestamp = snapshot.created_at or _utcnow()
+        normalized = self._direct_normalized_response(valuation_id, result, timestamp)
+        snapshot.normalized_response = normalized
+        payload["valuation_id"] = valuation_id
+        payload["response"] = normalized
 
     def get_tool_events(self, user_id: int, workspace_id: int) -> list[ToolEvent]:
         if self.get_workspace(user_id, workspace_id, include_deleted=True) is None:

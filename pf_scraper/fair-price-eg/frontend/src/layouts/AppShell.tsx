@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { TopNav } from "@/components/layout/TopNav";
+import { CopilotDrawer } from "@/features/copilot/CopilotDrawer";
 import { tabFromPath } from "@/navigation/tabs";
 import { useNavigationStore } from "@/store/navigationStore";
 import { ScreenTransition } from "./ScreenTransition";
@@ -26,7 +27,7 @@ export function AppShell() {
           </ScreenTransition>
         </AnimatePresence>
       </main>
+      <CopilotDrawer />
     </div>
   );
 }
-

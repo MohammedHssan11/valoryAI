@@ -148,6 +148,9 @@ export interface RentFairPriceData {
   tier_used: number;
   comps_count: number;
   confidence: ConfidenceDTO;
+  engine_used?: string;
+  routing_reason?: string;
+  explainability?: Record<string, unknown> | null;
   explanation: string[];
   explanation_trace: ExplanationItem[];
   retrieval_trace?: RetrievalStageItem[];

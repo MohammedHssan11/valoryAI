@@ -1,6 +1,14 @@
 import axios, { AxiosError, AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios";
+import { authSessionManager } from "@/auth/authSessionManager";
 import { appConfig } from "@/core/config";
 import { ApiErrorPayload, isApiErrorEnvelope, ValorApiError } from "./contracts";
+
+declare module "axios" {
+  interface InternalAxiosRequestConfig {
+    authRetried?: boolean;
+    skipAuth?: boolean;
+  }
+}
 
 function makeRequestId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -69,7 +77,16 @@ export const http = axios.create({
 http.interceptors.request.use((config) => {
   config.headers.set("X-Request-ID", makeRequestId());
   config.headers.set("X-Correlation-ID", correlationId);
-  return config;
+  if (config.skipAuth) {
+    return config;
+  }
+
+  return authSessionManager.getValidAccessToken().then((token) => {
+    if (token) {
+      config.headers.set("Authorization", `Bearer ${token}`);
+    }
+    return config;
+  });
 });
 
 http.interceptors.response.use(
@@ -83,7 +100,27 @@ http.interceptors.response.use(
     }
     return response;
   },
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    const status = error.response?.status;
+    const config = error.config;
+
+    if (status === 401 && config && !config.authRetried && !config.skipAuth) {
+      try {
+        const token = await authSessionManager.renewSession();
+        config.authRetried = true;
+        config.headers.set("Authorization", `Bearer ${token}`);
+        return http(config);
+      } catch {
+        await authSessionManager.expireSession();
+      }
+    } else if (status === 401) {
+      await authSessionManager.expireSession();
+    }
+
+    if (status === 403) {
+      authSessionManager.markAccessDenied();
+    }
+
     if (isApiErrorEnvelope(error.response?.data)) {
       throw new ValorApiError(error.response.data.error, {
         requestId: error.response.data.meta.request_id ?? readResponseHeader(error.response.headers, "x-request-id"),

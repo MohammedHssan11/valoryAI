@@ -1,4 +1,4 @@
-from app.api.routes.pricing import _combine_confidence
+from app.services.valuation_service import _combine_confidence
 
 
 def test_final_confidence_is_capped_by_location_resolution_dimension():

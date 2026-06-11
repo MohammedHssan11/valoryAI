@@ -21,7 +21,7 @@ import { GlassCard, GlassPanel } from "@/components/ui/glass";
 import { cn } from "@/lib/utils";
 import { requestBrokerReason, streamBrokerReason } from "@/services/brokerService";
 import { useAiContinuityStore } from "@/store/aiContinuityStore";
-import { useBrokerStore } from "@/store/brokerStore";
+import { resolveBrokerExecutionContext, type BrokerExecutionContext, useBrokerStore } from "@/store/brokerStore";
 import { useIntelligenceSessionStore } from "@/store/intelligenceSessionStore";
 import { useValuationStore } from "@/store/valuationStore";
 import type {
@@ -673,8 +673,10 @@ export function BrokerScreen() {
   const latestMessage = events.at(-1)?.message;
   const orbState: OrbState = isStreaming ? "analyzing" : response ? "responding" : valuation ? "thinking" : "idle";
 
-  const buildRequest = React.useCallback((): BrokerReasonRequest => ({
+  const buildRequest = React.useCallback((context: BrokerExecutionContext): BrokerReasonRequest => ({
     session_id: sessionId,
+    workspace_id: context.workspaceId,
+    scenario_id: context.scenarioId,
     message: message.trim() || DEFAULT_PROMPT,
     valuation_request: valuation ? draft : undefined,
   }), [draft, message, sessionId, valuation]);
@@ -703,11 +705,12 @@ export function BrokerScreen() {
     setError(null);
     setIsStreaming(true);
     setOrbState("analyzing");
-    pushEvent("Broker reasoning stream submitted");
-
-    const request = buildRequest();
 
     try {
+      const context = await resolveBrokerExecutionContext(controller.signal);
+      const request = buildRequest(context);
+      pushEvent("Broker reasoning stream submitted");
+
       const streamed = await streamBrokerReason(
         request,
         {

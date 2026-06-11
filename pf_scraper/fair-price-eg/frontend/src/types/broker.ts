@@ -67,6 +67,8 @@ export interface InvestorPreferences {
 
 export interface BrokerReasonRequest {
   session_id?: string | null;
+  workspace_id: number;
+  scenario_id: number;
   message: string;
   valuation_request?: RentFairPriceRequest | null;
   investor_preferences?: InvestorPreferences | null;
@@ -136,14 +138,22 @@ export interface BrokerTokenBudget {
 }
 
 export interface BrokerValuationSummary {
+  valuation_id: string;
   fair_price_egp: number;
   range_low_egp: number;
   range_high_egp: number;
-  flag: string;
-  tier_used: number;
-  comps_count: number;
-  confidence_score: number;
   confidence_label: string;
+  engine_used: string;
+  routing_reason: string;
+  source: "TruthLayer";
+  fairness_status?: string | null;
+  why_this_price?: string | null;
+  strongest_factors?: string | null;
+  confidence_reason?: string | null;
+  flag?: string | null;
+  tier_used?: number | null;
+  comps_count?: number | null;
+  confidence_score?: number | null;
   area: Record<string, unknown>;
   property_category?: PropertyCategory | string | null;
   valuation_contract?: Record<string, unknown>;
@@ -162,6 +172,8 @@ export interface BrokerComparableEvidence {
   age_days?: number | null;
   weight?: number | null;
   reason_code?: string | null;
+  similarity_score?: number | null;
+  listing_date?: string | null;
   amenity_similarity?: number | null;
   matched_amenities?: string[];
   missing_amenities?: string[];
@@ -175,6 +187,7 @@ export interface BrokerContext {
   comparable_evidence: BrokerComparableEvidence[];
   confidence_factors: Record<string, number>;
   explainability_trace: Array<Record<string, unknown>>;
+  explainability?: Record<string, unknown>;
   valuation_contract?: Record<string, unknown>;
   amenity_intelligence?: Record<string, unknown>;
   district_intelligence: Record<string, unknown>;
@@ -186,14 +199,18 @@ export interface BrokerContext {
 }
 
 export interface BrokerAuthoritativeValues {
+  valuation_id: string;
   fair_price_egp: number;
   range_low_egp: number;
   range_high_egp: number;
-  flag: string;
-  tier_used: number;
-  comps_count: number;
-  confidence_score: number;
   confidence_label: string;
+  engine_used: string;
+  routing_reason: string;
+  source: "TruthLayer";
+  flag?: string | null;
+  tier_used?: number | null;
+  comps_count?: number | null;
+  confidence_score?: number | null;
   property_category?: PropertyCategory | string | null;
 }
 
