@@ -1,0 +1,58 @@
+# Publication Risk Assessment
+
+## PII Risks
+- **sample_100.csv**: Potentially sensitive columns found: lat, lng
+- **sample_250.csv**: Potentially sensitive columns found: lat, lng
+- **sample_500.csv**: Potentially sensitive columns found: lat, lng
+- **sample_dry_run.csv**: Potentially sensitive columns found: lat, lng
+- **input.json**: Potentially sensitive columns found: package_name
+- **input.json**: Potentially sensitive columns found: package_name
+- **input.json**: Potentially sensitive columns found: package_name
+- **input.json**: Potentially sensitive columns found: package_name
+- **input.json**: Potentially sensitive columns found: package_name
+- **manifest.json**: Potentially sensitive columns found: name, short_name, prefer_related_applications
+- **all_egypt.csv**: Potentially sensitive columns found: latitude
+- **buy.csv**: Potentially sensitive columns found: latitude
+- **commercial_buy.csv**: Potentially sensitive columns found: latitude
+- **commercial_rent.csv**: Potentially sensitive columns found: latitude
+- **new_projects.csv**: Potentially sensitive columns found: latitude
+- **rent.csv**: Potentially sensitive columns found: latitude
+- **commercial_rent.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **commercial_sale.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **compound_frequency.csv**: Potentially sensitive columns found: compound_name
+- **feature_registry.csv**: Potentially sensitive columns found: feature_name
+- **residential_rent.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **residential_sale.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **residential_rent.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **residential_sale.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **commercial_rent.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **commercial_sale.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **compound_frequency.csv**: Potentially sensitive columns found: compound_name
+- **feature_registry.csv**: Potentially sensitive columns found: feature_name
+- **residential_rent.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **residential_sale.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **commercial_rent.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **commercial_sale.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **compound_frequency.csv**: Potentially sensitive columns found: compound_name
+- **feature_registry.csv**: Potentially sensitive columns found: feature_name
+- **residential_rent.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **residential_sale.parquet**: Potentially sensitive columns found: latitude, compound_name
+- **buy_clean.csv**: Potentially sensitive columns found: lat, lng
+- **commercial_buy_clean.csv**: Potentially sensitive columns found: lat, lng
+- **commercial_rent_clean.csv**: Potentially sensitive columns found: lat, lng
+- **rent_residential.csv**: Potentially sensitive columns found: lat, lng
+- **package-lock.json**: Potentially sensitive columns found: name
+- **package.json**: Potentially sensitive columns found: name
+- **package-lock.json**: Potentially sensitive columns found: name
+- **package.json**: Potentially sensitive columns found: name
+- **manifest.json**: Potentially sensitive columns found: short_name, name
+- **egypt_villas_3br_2bath.csv**: Potentially sensitive columns found: amenity_names, has_coordinates, latitude, location_full_name, location_path_name
+- **dubai_commercial_buy.csv**: Potentially sensitive columns found: has_coordinates, latitude
+- **dubai_commercial_rent.csv**: Potentially sensitive columns found: has_coordinates, latitude
+- **dubai_new_projects.csv**: Potentially sensitive columns found: has_coordinates, latitude
+- **dubai_residential_buy.csv**: Potentially sensitive columns found: has_coordinates, latitude
+- **dubai_residential_rent.csv**: Potentially sensitive columns found: has_coordinates, latitude
+- **metadata.json**: Potentially sensitive columns found: name
+- **package.json**: Potentially sensitive columns found: name
+
+**Mitigation**: Drop or hash all agent names, phone numbers, and exact contact emails before publishing.

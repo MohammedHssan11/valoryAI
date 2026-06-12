@@ -1,0 +1,24 @@
+{
+  "columns": [
+    {
+      "name": "id",
+      "type": "string"
+    },
+    {
+      "name": "title",
+      "type": "string"
+    },
+    {
+      "name": "price",
+      "type": "float"
+    },
+    {
+      "name": "currency",
+      "type": "string"
+    },
+    {
+      "name": "location",
+      "type": "string"
+    }
+  ]
+}

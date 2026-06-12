@@ -1,12 +1,112 @@
+# ==========================================
+# 1. Environment Secrets & Configuration
+# ==========================================
 .env
-.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging
+.env.production
+.env.dev
+.env.staging.example
+!*.env.example
 
+# ==========================================
+# 2. Dependency Artifacts & Caches
+# ==========================================
+node_modules/
+jspm_packages/
+.npm/
+.yarn-cache/
+.pnp/
+.pnp.js
+.pytest_cache/
 __pycache__/
 *.pyc
-
-build/
+*.pyo
+*.pyd
 .dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
 
-android/.gradle/
+# ==========================================
+# 3. Compilation Outputs & Build Targets
+# ==========================================
+dist/
+build/
+out/
+bin/
+obj/
+*.class
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+*.exe
+*.app
+*.ipa
+*.apk
+*.aab
+flutter_valorai.iml
+*.iml
 
+# ==========================================
+# 4. IDEs and Editors
+# ==========================================
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# 5. Logs, Coverage, and Telemetry
+# ==========================================
+*.log
+*_dev.log
+*_dev.out.log
+*.err.log
+*.out.log
+coverage/
+.nyc_output/
+.playwright-mcp/
+
+# ==========================================
+# 6. Database Caches & Local Databases
+# ==========================================
+*.sqlite3
+*.db
+*.sql.gz
+
+# ==========================================
+# 7. Large Data Files, Backups & Temp files
+# ==========================================
 *.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.jsonl
+*.jsonl.tmp
+*.tmp
+*.csv
+*.parquet
+*.cbm
+data/scraper_raw/
+data/scraper_processed_eg/
+# Exception: Keep kaggle template csvs if small, but exclude raw databases
+/data/scraper_raw/*
+/data/scraper_processed_eg/*

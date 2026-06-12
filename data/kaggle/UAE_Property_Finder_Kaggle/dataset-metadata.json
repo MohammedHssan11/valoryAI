@@ -1,0 +1,18 @@
+{
+  "title": "UAE Property Finder Comprehensive Dataset",
+  "subtitle": "Real estate listings across Dubai for rent, buy, and commercial",
+  "id": "mohammedhassan1112/uae-property-finder",
+  "tags": [
+    "real estate",
+    "dubai",
+    "uae",
+    "housing",
+    "property"
+  ],
+  "description": "This dataset provides up-to-date real estate listings for the UAE market, focusing primarily on Dubai. Includes residential and commercial properties.",
+  "licenses": [
+    {
+      "name": "CC0-1.0"
+    }
+  ]
+}

@@ -15,9 +15,14 @@ Copy-Item .env.staging.example .env
 ```text
 POSTGRES_PASSWORD
 CORS_ORIGINS
+FIREBASE_PROJECT_ID
+VITE_FIREBASE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN
+VITE_FIREBASE_PROJECT_ID
+VITE_FIREBASE_APP_ID
 ```
 
-Use `APP_ENV=staging`, `DEBUG=false`, and `LOG_JSON=true` for staging. Do not use wildcard CORS origins in staging or production.
+Use `APP_ENV=staging`, `DEBUG=false`, and `LOG_JSON=true` for staging. Do not use wildcard CORS origins in staging or production. The `VITE_FIREBASE_*` values are compiled into the static React bundle, so rebuild the `frontend` image after changing Firebase Web SDK configuration.
 
 ## Startup Sequence
 

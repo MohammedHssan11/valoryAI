@@ -4,7 +4,7 @@ import random
 from sqlalchemy import text
 
 os.environ['DATABASE_URL'] = 'postgresql+psycopg2://fairprice:fairprice@localhost:5432/fairprice'
-sys.path.append(os.path.abspath(r'c:\Users\mh978\Downloads\mobile computing project\pf_scraper\fair-price-eg\backend'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend')))
 from app.db.session import SessionLocal
 from app.comps.selector import fetch_comps
 from app.services.valuation_service import price_listing
